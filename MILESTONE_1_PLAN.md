@@ -215,7 +215,7 @@ By end of Milestone 1, we should have:
 Switch to coding mode when all items below are true:
 - [x] Backend runtime choice confirmed (Node.js + TypeScript + Fastify)
 - [x] Apple Developer account access + bundle ID availability confirmed
-- [ ] Initial deployment target selected for backend (can be temporary staging)
-- [ ] This Milestone 1 plan accepted as implementation baseline
+- [x] Initial deployment target selected for backend (Render Free staging)
+- [x] This Milestone 1 plan accepted as implementation baseline
 
 When these are checked, coding can start immediately.
