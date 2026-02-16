@@ -97,9 +97,9 @@ Backend should remain thin and portable so you can still add web clients later.
 - AVFoundation/VisionKit for barcode scanning
 
 ## Backend/API
-- FastAPI (Python) or Node.js (Express/Fastify)
-- PostgreSQL (managed)
-- Auth: email magic link or passkeys (minimal friction)
+- Node.js + TypeScript (Fastify)
+- PostgreSQL (managed, Supabase Free tier initially)
+- Auth: Supabase email magic links for MVP (Sign in with Apple later)
 - Image/barcode support via API + third-party food DB lookup
 
 ## Hosting (budget aware)
@@ -283,6 +283,7 @@ Plan:
 4. Mandatory nutrition fields: **calories, carbs, protein**.
 5. Login approach: start with **email magic link** for MVP (easiest deployment), then add **Sign in with Apple** after core workflows are stable.
 6. Backup/export requirement at MVP: **full JSON export/import**.
+7. Backend stack for implementation: **Node.js + TypeScript (Fastify)** with **Supabase Postgres/Auth (Free tier)** for Milestone 1.
 
 ---
 
