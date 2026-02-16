@@ -10,8 +10,30 @@ import Testing
 
 struct macroliciousTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+        @Test func decodesProfileResponse() async throws {
+                let json = """
+                {
+                    "user": {
+                        "id": "user_123",
+                        "email": "aniruddha@example.com",
+                        "macroTargets": {
+                            "calories": 2200,
+                            "carbs": 275,
+                            "protein": 140
+                        },
+                        "createdAt": "2026-02-15T18:00:00Z",
+                        "updatedAt": "2026-02-15T18:00:00Z"
+                    }
+                }
+                """
+
+                let data = try #require(json.data(using: .utf8))
+                let decoded = try JSONDecoder().decode(MeResponse.self, from: data)
+
+                #expect(decoded.user.email == "aniruddha@example.com")
+                #expect(decoded.user.macroTargets.calories == 2200)
+                #expect(decoded.user.macroTargets.carbs == 275)
+                #expect(decoded.user.macroTargets.protein == 140)
     }
 
 }
