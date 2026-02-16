@@ -98,6 +98,11 @@ By end of Milestone 1, we should have:
 - Supabase Free project used for auth and Postgres
 - CI pipeline validates tests/typecheck before merge and before release builds
 
+### Portability requirements
+- Avoid provider-specific services in core app/business logic.
+- Keep infrastructure configuration and secrets environment-driven (env vars only; no hardcoded provider values).
+- Encapsulate provider integrations behind thin adapter boundaries so hosting can be changed with minimal code impact.
+
 ---
 
 ## 4) Deliverables
