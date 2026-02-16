@@ -58,6 +58,46 @@ By end of Milestone 1, we should have:
 - Fastify keeps runtime lightweight while still supporting strong schema validation.
 - Supabase Free keeps initial costs near zero while enabling auth + managed Postgres.
 
+## 3.1) System Architecture
+
+### Component boundaries
+- iOS app (SwiftUI)
+   - UI, local view state, and request orchestration
+   - Sends authenticated API requests to backend
+- Backend API (Node.js + TypeScript + Fastify)
+   - Owns business logic and API contracts
+   - Verifies auth/session context
+   - Reads/writes data in Postgres
+- Supabase Auth
+   - Issues and verifies magic-link auth sessions/tokens
+   - Provides identity context used by backend
+- Supabase Postgres
+   - System-of-record for users, macro targets, and ingredients
+
+### Primary request flows
+1. Sign-in with magic link
+    - iOS app -> backend auth request endpoint
+    - backend -> Supabase Auth magic-link request
+    - user taps emailed link -> session/token issued
+    - iOS app stores session securely and uses it for API calls
+
+2. Read/Update profile macros
+    - iOS app -> backend `GET /me` or `PATCH /me/macro-targets`
+    - backend validates session and applies business rules
+    - backend persists changes in Supabase Postgres
+
+3. Ingredient CRUD
+    - iOS app -> backend ingredient endpoints
+    - backend validates payload and ownership
+    - backend writes/reads from Supabase Postgres
+    - backend returns normalized response models to iOS app
+
+### Deployment topology (Milestone 1)
+- iOS app distributed via internal TestFlight
+- Backend API deployed to one staging environment (Render or Railway)
+- Supabase Free project used for auth and Postgres
+- CI pipeline validates tests/typecheck before merge and before release builds
+
 ---
 
 ## 4) Deliverables
