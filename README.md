@@ -53,5 +53,5 @@ This project is intended to be privacy-respecting:
 Formal privacy and security documents will be added as implementation starts.
 
 ## License
-No license has been selected yet.
-If this repository is made open source, a license should be added before accepting external contributions.
+This project is licensed under the MIT License.
+See [LICENSE](LICENSE) for details.
