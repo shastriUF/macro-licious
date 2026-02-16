@@ -2,6 +2,9 @@
 
 Create the iOS project in Xcode (manual setup keeps signing and App Store settings clean).
 
+Detailed setup + new machine onboarding guide:
+- `ios/XCODE_SETUP.md`
+
 ## Project settings
 - Product Name: `MacroLicious`
 - Interface: `SwiftUI`
