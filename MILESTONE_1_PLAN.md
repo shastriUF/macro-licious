@@ -173,10 +173,14 @@ By end of Milestone 1, we should have:
 3. Set up CI workflow
 4. Enable strict TypeScript and baseline lint/typecheck rules
 
+Status: ✅ Completed
+
 ## Phase B — Auth and profile
 1. Implement magic-link request/verify backend
 2. Implement iOS auth screens and session persistence
 3. Add profile + macro target read/update
+
+Status: ✅ Completed
 
 ## Phase C — Ingredient CRUD
 1. Add ingredient data schema + persistence

@@ -53,6 +53,21 @@ final class APIClient {
         )
     }
 
+    func updateMacroTargets(
+        sessionToken: String,
+        baseURL: String,
+        request: UpdateMacroTargetsRequest
+    ) async throws -> MeResponse {
+        try await send(
+            path: "/me/macro-targets",
+            method: "PATCH",
+            baseURL: baseURL,
+            body: request,
+            authToken: sessionToken,
+            decodeAs: MeResponse.self
+        )
+    }
+
     private func send<RequestBody: Encodable, ResponseBody: Decodable>(
         path: String,
         method: String,

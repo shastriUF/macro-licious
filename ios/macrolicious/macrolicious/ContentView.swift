@@ -62,9 +62,19 @@ struct ContentView: View {
                     if let user = viewModel.currentUser {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Email: \(user.email)")
-                            Text("Calories: \(Int(user.macroTargets.calories))")
-                            Text("Carbs: \(Int(user.macroTargets.carbs))")
-                            Text("Protein: \(Int(user.macroTargets.protein))")
+                        }
+
+                        TextField("Calories", text: $viewModel.caloriesInput)
+                            .keyboardType(.numberPad)
+                        TextField("Carbs", text: $viewModel.carbsInput)
+                            .keyboardType(.numberPad)
+                        TextField("Protein", text: $viewModel.proteinInput)
+                            .keyboardType(.numberPad)
+
+                        Button("Save Macro Targets") {
+                            Task {
+                                await viewModel.saveMacroTargets()
+                            }
                         }
                     } else {
                         Text("No signed-in user")
