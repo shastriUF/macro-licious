@@ -31,7 +31,8 @@ final class AuthViewModel: ObservableObject {
             let response = try await apiClient.verifyMagicLink(token: token, baseURL: normalizedBaseURL)
             sessionStore.sessionToken = response.sessionToken
             currentUser = response.user
-            statusMessage = "Signed in as \(response.user.email)."
+            token = ""
+            statusMessage = "Signed in as \(response.user.email). Token consumed; request a new one if needed."
         }
     }
 

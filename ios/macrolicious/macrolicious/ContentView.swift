@@ -45,6 +45,7 @@ struct ContentView: View {
                             await viewModel.verifyMagicLink()
                         }
                     }
+                    .disabled(viewModel.token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
 
                 Section("Profile") {
