@@ -18,5 +18,9 @@ Node.js + TypeScript + Fastify service for MacroLicious.
 ## Current endpoints
 - `GET /`
 - `GET /health`
+- `POST /auth/magic-link/request`
+- `POST /auth/magic-link/verify`
+- `GET /me`
+- `PATCH /me/macro-targets`
 
-Milestone 1 will add auth, profile, and ingredient CRUD endpoints.
+Milestone 1 next step is ingredient CRUD endpoints.

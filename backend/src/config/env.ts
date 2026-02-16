@@ -6,7 +6,8 @@ dotenv.config();
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
-  APP_NAME: z.string().min(1).default('MacroLicious API')
+  APP_NAME: z.string().min(1).default('MacroLicious API'),
+  MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().min(1).max(120).default(15)
 });
 
 export const env = envSchema.parse(process.env);
