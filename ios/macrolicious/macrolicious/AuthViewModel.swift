@@ -10,6 +10,13 @@ final class AuthViewModel: ObservableObject {
     @Published var caloriesInput = ""
     @Published var carbsInput = ""
     @Published var proteinInput = ""
+    @Published var ingredients: [Ingredient] = []
+    @Published var ingredientNameInput = ""
+    @Published var ingredientBrandInput = ""
+    @Published var ingredientCaloriesInput = ""
+    @Published var ingredientCarbsInput = ""
+    @Published var ingredientProteinInput = ""
+    @Published var ingredientFatInput = ""
     @Published var isLoading = false
 
     private let apiClient: APIClient
@@ -54,6 +61,114 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
+    func refreshIngredients() async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        await perform {
+            let response = try await apiClient.listIngredients(sessionToken: sessionToken, baseURL: normalizedBaseURL)
+            ingredients = response.ingredients
+            statusMessage = "Ingredients refreshed."
+        }
+    }
+
+    func createIngredient() async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        guard
+            !ingredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            let calories = Double(ingredientCaloriesInput),
+            let carbs = Double(ingredientCarbsInput),
+            let protein = Double(ingredientProteinInput),
+            let fat = Double(ingredientFatInput),
+            calories >= 0,
+            carbs >= 0,
+            protein >= 0,
+            fat >= 0
+        else {
+            statusMessage = "Enter ingredient name and valid macro numbers."
+            return
+        }
+
+        await perform {
+            let request = CreateIngredientRequest(
+                name: ingredientNameInput,
+                brand: ingredientBrandInput.isEmpty ? nil : ingredientBrandInput,
+                barcode: nil,
+                caloriesPer100g: calories,
+                carbsPer100g: carbs,
+                proteinPer100g: protein,
+                fatPer100g: fat
+            )
+
+            let response = try await apiClient.createIngredient(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                request: request
+            )
+
+            ingredients.append(response.ingredient)
+            ingredients.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            resetIngredientInput()
+            statusMessage = "Ingredient created."
+        }
+    }
+
+    func updateIngredient(_ ingredient: Ingredient) async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        await perform {
+            let request = UpdateIngredientRequest(
+                name: ingredient.name,
+                brand: ingredient.brand,
+                barcode: ingredient.barcode,
+                caloriesPer100g: ingredient.caloriesPer100g,
+                carbsPer100g: ingredient.carbsPer100g,
+                proteinPer100g: ingredient.proteinPer100g,
+                fatPer100g: ingredient.fatPer100g
+            )
+
+            let response = try await apiClient.updateIngredient(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                ingredientId: ingredient.id,
+                request: request
+            )
+
+            if let index = ingredients.firstIndex(where: { $0.id == response.ingredient.id }) {
+                ingredients[index] = response.ingredient
+            }
+
+            statusMessage = "Ingredient updated."
+        }
+    }
+
+    func archiveIngredient(_ ingredientId: String) async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        await perform {
+            _ = try await apiClient.archiveIngredient(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                ingredientId: ingredientId
+            )
+
+            ingredients.removeAll { $0.id == ingredientId }
+            statusMessage = "Ingredient archived."
+        }
+    }
+
     func saveMacroTargets() async {
         guard let sessionToken = sessionStore.sessionToken else {
             statusMessage = "No session token saved."
@@ -94,10 +209,12 @@ final class AuthViewModel: ObservableObject {
     func signOut() {
         sessionStore.clearSession()
         currentUser = nil
+        ingredients = []
         token = ""
         caloriesInput = ""
         carbsInput = ""
         proteinInput = ""
+        resetIngredientInput()
         statusMessage = "Signed out."
     }
 
@@ -126,5 +243,14 @@ final class AuthViewModel: ObservableObject {
         caloriesInput = String(Int(user.macroTargets.calories))
         carbsInput = String(Int(user.macroTargets.carbs))
         proteinInput = String(Int(user.macroTargets.protein))
+    }
+
+    private func resetIngredientInput() {
+        ingredientNameInput = ""
+        ingredientBrandInput = ""
+        ingredientCaloriesInput = ""
+        ingredientCarbsInput = ""
+        ingredientProteinInput = ""
+        ingredientFatInput = ""
     }
 }

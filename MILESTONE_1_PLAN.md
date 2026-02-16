@@ -187,6 +187,8 @@ Status: ✅ Completed
 2. Implement CRUD endpoints
 3. Connect minimal iOS ingredient list/create/edit screens
 
+Status: ✅ Implemented
+
 ## Phase D — Hardening + release
 1. Fill baseline unit/integration/UI smoke tests
 2. Run full CI on main

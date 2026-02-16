@@ -2,10 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app';
 import { authStore } from '../src/domain/auth-store';
+import { ingredientStore } from '../src/domain/ingredient-store';
 
 describe('auth and profile routes', () => {
   afterEach(() => {
     authStore.reset();
+    ingredientStore.reset();
   });
 
   it('supports magic-link sign-in and profile retrieval', async () => {

@@ -68,6 +68,63 @@ final class APIClient {
         )
     }
 
+    func listIngredients(sessionToken: String, baseURL: String) async throws -> IngredientsResponse {
+        try await send(
+            path: "/ingredients",
+            method: "GET",
+            baseURL: baseURL,
+            body: Optional<Int>.none,
+            authToken: sessionToken,
+            decodeAs: IngredientsResponse.self
+        )
+    }
+
+    func createIngredient(
+        sessionToken: String,
+        baseURL: String,
+        request: CreateIngredientRequest
+    ) async throws -> IngredientResponse {
+        try await send(
+            path: "/ingredients",
+            method: "POST",
+            baseURL: baseURL,
+            body: request,
+            authToken: sessionToken,
+            decodeAs: IngredientResponse.self
+        )
+    }
+
+    func updateIngredient(
+        sessionToken: String,
+        baseURL: String,
+        ingredientId: String,
+        request: UpdateIngredientRequest
+    ) async throws -> IngredientResponse {
+        try await send(
+            path: "/ingredients/\(ingredientId)",
+            method: "PATCH",
+            baseURL: baseURL,
+            body: request,
+            authToken: sessionToken,
+            decodeAs: IngredientResponse.self
+        )
+    }
+
+    func archiveIngredient(
+        sessionToken: String,
+        baseURL: String,
+        ingredientId: String
+    ) async throws -> IngredientResponse {
+        try await send(
+            path: "/ingredients/\(ingredientId)",
+            method: "DELETE",
+            baseURL: baseURL,
+            body: Optional<Int>.none,
+            authToken: sessionToken,
+            decodeAs: IngredientResponse.self
+        )
+    }
+
     private func send<RequestBody: Encodable, ResponseBody: Decodable>(
         path: String,
         method: String,

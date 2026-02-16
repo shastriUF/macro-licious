@@ -35,6 +35,49 @@ struct UpdateMacroTargetsRequest: Codable {
     let protein: Double
 }
 
+struct Ingredient: Codable, Equatable, Identifiable {
+    let id: String
+    let userId: String
+    let name: String
+    let brand: String?
+    let barcode: String?
+    let caloriesPer100g: Double
+    let carbsPer100g: Double
+    let proteinPer100g: Double
+    let fatPer100g: Double
+    let archived: Bool
+    let createdAt: String
+    let updatedAt: String
+}
+
+struct IngredientsResponse: Codable {
+    let ingredients: [Ingredient]
+}
+
+struct IngredientResponse: Codable {
+    let ingredient: Ingredient
+}
+
+struct CreateIngredientRequest: Codable {
+    let name: String
+    let brand: String?
+    let barcode: String?
+    let caloriesPer100g: Double
+    let carbsPer100g: Double
+    let proteinPer100g: Double
+    let fatPer100g: Double
+}
+
+struct UpdateIngredientRequest: Codable {
+    let name: String?
+    let brand: String?
+    let barcode: String?
+    let caloriesPer100g: Double?
+    let carbsPer100g: Double?
+    let proteinPer100g: Double?
+    let fatPer100g: Double?
+}
+
 struct APIErrorResponse: Codable {
     let error: String
 }

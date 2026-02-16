@@ -22,5 +22,8 @@ Node.js + TypeScript + Fastify service for MacroLicious.
 - `POST /auth/magic-link/verify`
 - `GET /me`
 - `PATCH /me/macro-targets`
-
-Milestone 1 next step is ingredient CRUD endpoints.
+- `POST /ingredients`
+- `GET /ingredients`
+- `GET /ingredients/:ingredientId`
+- `PATCH /ingredients/:ingredientId`
+- `DELETE /ingredients/:ingredientId` (soft archive)
