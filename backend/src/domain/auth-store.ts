@@ -49,7 +49,11 @@ export class AuthStore {
     challenge.used = true;
     this.challengesByToken.set(token, challenge);
 
-    const user = this.getOrCreateUser(challenge.email);
+    return this.createSessionForEmail(challenge.email);
+  }
+
+  createSessionForEmail(email: string): { sessionToken: string; user: User } {
+    const user = this.getOrCreateUser(email);
     const sessionToken = this.generateToken();
 
     this.sessionsByToken.set(sessionToken, {
