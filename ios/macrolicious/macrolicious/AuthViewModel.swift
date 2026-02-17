@@ -1,5 +1,42 @@
 import Foundation
 
+enum AuthCallbackParser {
+    static func accessToken(from url: URL) -> String? {
+        if let queryToken = parameter(named: "access_token", from: url.query) {
+            return queryToken
+        }
+
+        if let fragmentToken = parameter(named: "access_token", from: url.fragment) {
+            return fragmentToken
+        }
+
+        return nil
+    }
+
+    private static func parameter(named name: String, from parameterString: String?) -> String? {
+        guard let parameterString, !parameterString.isEmpty else {
+            return nil
+        }
+
+        let pairs = parameterString.split(separator: "&", omittingEmptySubsequences: true)
+
+        for pair in pairs {
+            let parts = pair.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+            guard parts.count == 2 else {
+                continue
+            }
+
+            let key = String(parts[0]).removingPercentEncoding ?? String(parts[0])
+            if key == name {
+                let rawValue = String(parts[1])
+                return rawValue.removingPercentEncoding ?? rawValue
+            }
+        }
+
+        return nil
+    }
+}
+
 @MainActor
 final class AuthViewModel: ObservableObject {
     @Published var email = ""
@@ -31,8 +68,13 @@ final class AuthViewModel: ObservableObject {
     func requestMagicLink() async {
         await perform {
             let response = try await apiClient.requestMagicLink(email: email, baseURL: normalizedBaseURL)
-            token = response.token
-            statusMessage = "Magic link requested. Dev token auto-filled for testing."
+
+            if let issuedToken = response.token {
+                token = issuedToken
+                statusMessage = "Magic link requested. Dev token auto-filled for testing."
+            } else {
+                statusMessage = response.note ?? "Magic link requested. Check your email to continue sign-in."
+            }
         }
     }
 
@@ -216,6 +258,16 @@ final class AuthViewModel: ObservableObject {
         proteinInput = ""
         resetIngredientInput()
         statusMessage = "Signed out."
+    }
+
+    func handleAuthCallback(url: URL) async {
+        guard let accessToken = AuthCallbackParser.accessToken(from: url) else {
+            statusMessage = "Auth callback received, but access token was missing."
+            return
+        }
+
+        token = accessToken
+        await verifyMagicLink()
     }
 
     func saveBaseURL() {

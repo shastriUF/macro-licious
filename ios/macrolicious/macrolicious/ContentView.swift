@@ -7,8 +7,9 @@
 
 import SwiftUI
 
+@MainActor
 struct ContentView: View {
-    @StateObject private var viewModel = AuthViewModel()
+    @StateObject private var viewModel: AuthViewModel
     @State private var editingIngredient: Ingredient?
     @State private var editName = ""
     @State private var editBrand = ""
@@ -16,6 +17,10 @@ struct ContentView: View {
     @State private var editCarbs = ""
     @State private var editProtein = ""
     @State private var editFat = ""
+
+    init(viewModel: AuthViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -238,5 +243,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(viewModel: AuthViewModel())
 }

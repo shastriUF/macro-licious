@@ -9,9 +9,16 @@ import SwiftUI
 
 @main
 struct macroliciousApp: App {
+    @StateObject private var authViewModel = AuthViewModel()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(viewModel: authViewModel)
+                .onOpenURL { url in
+                    Task {
+                        await authViewModel.handleAuthCallback(url: url)
+                    }
+                }
         }
     }
 }

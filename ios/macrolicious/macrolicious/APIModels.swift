@@ -16,8 +16,10 @@ struct UserProfile: Codable, Equatable {
 
 struct MagicLinkRequestResponse: Codable {
     let message: String
-    let token: String
-    let expiresAt: String
+    let token: String?
+    let expiresAt: String?
+    let provider: String?
+    let note: String?
 }
 
 struct MagicLinkVerifyResponse: Codable {
