@@ -22,15 +22,22 @@ In Supabase dashboard:
    - `https://your-staging-domain.example.com/auth/callback`
 
 ## 3) Add backend environment values
-In `backend/.env`:
+In `backend/.env` (non-secret values only):
 
 ```dotenv
 AUTH_PROVIDER=supabase
 SUPABASE_URL=https://<your-project-ref>.supabase.co
 SUPABASE_PUBLISHABLE_KEY=<your-publishable-key>
-SUPABASE_SECRET_KEY=<your-secret-key>
 SUPABASE_EMAIL_REDIRECT_URL=macrolicious://auth/callback
 ```
+
+Set the secret key outside `.env` so it does not get leaked during file sharing/screen share:
+
+```bash
+export SUPABASE_SECRET_KEY=<your-secret-key>
+```
+
+Add the export to `~/.zshrc` (or your shell profile) for persistence, then run `source ~/.zshrc`.
 
 For local dev fallback, switch back to:
 
@@ -69,7 +76,7 @@ Future schema changes:
 Do not edit production schema manually without a migration file.
 
 ## 5) Run Supabase persistence smoke test
-After configuring `backend/.env` with `AUTH_PROVIDER=supabase`, run:
+After configuring `backend/.env` with `AUTH_PROVIDER=supabase` and exporting `SUPABASE_SECRET_KEY`, run:
 
 ```bash
 npm run smoke:supabase

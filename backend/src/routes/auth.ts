@@ -13,6 +13,32 @@ const magicLinkVerifySchema = z.object({
   token: z.string().min(20)
 });
 
+type ProviderError = {
+  status?: number;
+  code?: string;
+  message?: string;
+};
+
+function mapProviderError(error: unknown, fallbackMessage: string): {
+  statusCode: number;
+  responseBody: { error: string; provider: 'supabase'; providerCode?: string };
+} {
+  const providerError = error as ProviderError;
+  const statusCode =
+    typeof providerError.status === 'number' && providerError.status >= 400 && providerError.status <= 599
+      ? providerError.status
+      : 502;
+
+  return {
+    statusCode,
+    responseBody: {
+      error: providerError.message ?? fallbackMessage,
+      provider: 'supabase',
+      providerCode: providerError.code
+    }
+  };
+}
+
 export const authRoute: FastifyPluginAsync = async (app) => {
   app.post('/auth/magic-link/request', async (request, reply) => {
     const result = magicLinkRequestSchema.safeParse(request.body);
@@ -46,7 +72,8 @@ export const authRoute: FastifyPluginAsync = async (app) => {
 
       if (error) {
         app.log.error({ error }, 'Supabase magic-link request failed');
-        return reply.status(502).send({ error: 'Failed to request magic link from provider' });
+        const mappedError = mapProviderError(error, 'Failed to request magic link from provider');
+        return reply.status(mappedError.statusCode).send(mappedError.responseBody);
       }
 
       return reply.send({
@@ -89,7 +116,12 @@ export const authRoute: FastifyPluginAsync = async (app) => {
       const supabase = getSupabasePublicClient();
       const { data, error } = await supabase.auth.getUser(result.data.token);
 
-      if (error || !data.user?.email) {
+      if (error) {
+        const mappedError = mapProviderError(error, 'Invalid provider access token');
+        return reply.status(mappedError.statusCode).send(mappedError.responseBody);
+      }
+
+      if (!data.user?.email) {
         return reply.status(401).send({
           error: 'Invalid provider access token'
         });
