@@ -38,38 +38,29 @@ For local dev fallback, switch back to:
 AUTH_PROVIDER=dev
 ```
 
-## 4) Apply database schema (prepared for backend persistence)
-Open Supabase SQL Editor and run:
+## 4) Apply schema using a versioned migration flow (recommended)
 
-```sql
-create table if not exists public.user_profiles (
-  id uuid primary key default gen_random_uuid(),
-  email text unique not null,
-  calories_target numeric not null default 2000,
-  carbs_target numeric not null default 250,
-  protein_target numeric not null default 120,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+Use the migration in source control instead of ad-hoc SQL edits:
+- `supabase/migrations/202602160001_initial_schema.sql`
 
-create table if not exists public.ingredients (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.user_profiles(id) on delete cascade,
-  name text not null,
-  brand text,
-  barcode text,
-  calories_per_100g numeric not null,
-  carbs_per_100g numeric not null,
-  protein_per_100g numeric not null,
-  fat_per_100g numeric not null,
-  archived boolean not null default false,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+### Option A (Supabase CLI, recommended)
+1. Install CLI (one-time):
+   - `brew install supabase/tap/supabase`
+2. From repo root:
+   - `supabase link --project-ref <your-project-ref>`
+   - `supabase db push`
 
-create index if not exists ingredients_user_id_idx on public.ingredients(user_id);
-create index if not exists ingredients_barcode_idx on public.ingredients(barcode);
-```
+This applies all migration files in `supabase/migrations` in order.
+
+### Option B (Dashboard SQL Editor, fallback)
+If you do not want to install CLI yet, open the migration file and run it manually in SQL Editor.
+
+Future schema changes:
+1. Add a new migration file in `supabase/migrations` (timestamped filename)
+2. Commit it
+3. Apply with `supabase db push`
+
+Do not edit production schema manually without a migration file.
 
 ## 5) Staged auth behavior in current backend
 Current implementation supports two auth modes:

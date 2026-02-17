@@ -19,6 +19,10 @@ Node.js + TypeScript + Fastify service for MacroLicious.
 
 See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for full Supabase Auth + DB setup.
 
+## Database migrations
+- Migration files are versioned under `supabase/migrations` at the repo root.
+- Apply using Supabase CLI: `supabase db push`.
+
 ## Validation commands
 - `npm run typecheck`
 - `npm run lint`
