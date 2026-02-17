@@ -42,6 +42,7 @@ AUTH_PROVIDER=dev
 
 Use the migration in source control instead of ad-hoc SQL edits:
 - `supabase/migrations/202602160001_initial_schema.sql`
+- `supabase/migrations/202602160002_enable_rls.sql`
 
 ### Option A (Supabase CLI, recommended)
 1. Install CLI (one-time):
@@ -51,6 +52,11 @@ Use the migration in source control instead of ad-hoc SQL edits:
    - `supabase db push`
 
 This applies all migration files in `supabase/migrations` in order.
+
+RLS note:
+- The second migration enables RLS on app tables.
+- For current backend-only access, do **not** add `anon`/`authenticated` policies yet.
+- Backend uses Supabase secret key, so server access continues to work while public Data API access is restricted.
 
 ### Option B (Dashboard SQL Editor, fallback)
 If you do not want to install CLI yet, open the migration file and run it manually in SQL Editor.
