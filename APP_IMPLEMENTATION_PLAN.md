@@ -1,6 +1,6 @@
 # Calorie & Macro Tracker — Product + Implementation Plan
 
-_Last updated: 2026-02-15_
+_Last updated: 2026-02-16_
 
 ## 1) Product Goal
 Build a lightweight, low-friction calorie and macro tracker focused on home cooking and ingredient-level precision, without ad-heavy UX.
@@ -224,12 +224,16 @@ Plan:
 - Testing: add unit tests for models/conversions baseline + API contract tests for ingredient CRUD.
 - Release strategy: ship first internal TestFlight build by end of milestone (even with limited features) to validate signing, distribution, and backend connectivity.
 
+Status: ✅ Mostly complete (core foundation delivered; release hardening remains iterative)
+
 ## Milestone 2 — Logging Core
 - Meal diary screens.
 - Unit conversion + macro calculations.
 - Daily totals and target progress.
 - Testing: add calculation regression tests and iOS UI tests for add/edit/delete meal log flows.
 - Release strategy: push milestone-complete TestFlight build and run end-to-end diary smoke test on device.
+
+Status: 🟡 Not started (plan created in `MILESTONE_2_PLAN.md`)
 
 ## Milestone 3 — Recipes + Wet Weight
 - Recipe creation/editing.
@@ -238,6 +242,8 @@ Plan:
 - Testing: add wet-weight math golden tests and integration tests for leftover state transitions.
 - Release strategy: push TestFlight build focused on recipe + leftovers real-device workflow validation.
 
+Status: 🟡 Not started (plan created in `MILESTONE_3_PLAN.md`)
+
 ## Milestone 4 — Barcode + Quality
 - Barcode scanner UX.
 - External barcode lookup + fallback.
@@ -245,11 +251,15 @@ Plan:
 - Testing: add barcode mock/fixture tests, offline fallback tests, and end-to-end diary logging smoke tests.
 - Release strategy: push TestFlight build for camera/barcode reliability checks in real-world usage.
 
+Status: 🟡 Not started (plan created in `MILESTONE_4_PLAN.md`)
+
 ## Milestone 5 — Deploy + Operate
 - Deploy backend + DB on low-cost host.
 - Backups, monitoring, and basic analytics.
 - Maintain continuous TestFlight cadence (early and often): release after each milestone and for major feature branches.
 - Testing: require CI green on all suites before TestFlight release and run post-deploy health checks.
+
+Status: 🟡 Not started (plan created in `MILESTONE_5_PLAN.md`)
 
 ---
 
@@ -300,18 +310,18 @@ Plan:
 ## 16) MVP v1 Execution Checklist (Coding Mode)
 
 ### Foundation & Tooling
-- [ ] Create iOS app project skeleton (SwiftUI) and backend service skeleton.
-- [ ] Set up CI pipeline (build + tests + lint checks).
-- [ ] Configure dev/staging/prod environment variables and secrets handling.
+- [x] Create iOS app project skeleton (SwiftUI) and backend service skeleton.
+- [x] Set up CI pipeline (build + tests + lint checks).
+- [x] Configure dev/staging/prod environment variables and secrets handling.
 - [ ] Establish API schema and versioning conventions.
 
 ### Auth & User Profile
-- [ ] Implement email magic-link authentication.
-- [ ] Add user profile and macro target settings (calories, carbs, protein).
+- [x] Implement email magic-link authentication.
+- [x] Add user profile and macro target settings (calories, carbs, protein).
 - [ ] Add sign-out/session expiration handling.
 
 ### Ingredient System
-- [ ] Implement ingredient create/read/update/archive.
+- [x] Implement ingredient create/read/update/archive.
 - [ ] Support input units: g, oz, lb, ml, tsp, tbsp, cup.
 - [ ] Implement conversion engine with canonical storage and density-aware volume conversion.
 - [ ] Add manual custom ingredient creation flow optimized for raw produce.
@@ -346,7 +356,22 @@ Plan:
 - [ ] End-to-end smoke test script for real-device milestone validation.
 
 ### Release & Operations
-- [ ] Produce first internal TestFlight build in Milestone 1.
+- [x] Produce first internal TestFlight build in Milestone 1.
 - [ ] Release updated TestFlight build after each milestone and major feature branch.
 - [ ] Require CI green before every TestFlight submission.
 - [ ] Run post-deploy health checks for backend and DB after each release.
+
+---
+
+## 17) Current Progress Snapshot (2026-02-16)
+
+### Delivered
+- Backend: auth/profile + ingredient CRUD APIs, tests, lint/typecheck, CI, Supabase staged persistence, smoke test.
+- iOS: auth/profile + ingredient CRUD screens, session handling, callback URL wiring for deep-link flow, shared Xcode scheme for CLI/CI.
+- Infra/docs: Supabase setup guide, migration workflow, RLS enablement migration, secret-handling guidance.
+
+### Next Critical Path
+1. Milestone 2 logging domain + diary UI/API.
+2. Milestone 3 recipe/cook-session/wet-weight math.
+3. Milestone 4 barcode integration + fallback + quality pass.
+4. Milestone 5 deploy/operate hardening and release cadence.
