@@ -57,3 +57,6 @@ build/
 *.sqlite
 *.sqlite3
 *.db
+
+# Supabase local metadata
+supabase/.temp/
