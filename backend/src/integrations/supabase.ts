@@ -6,12 +6,12 @@ let cachedPublicClient: SupabaseClient | null = null;
 let cachedAdminClient: SupabaseClient | null = null;
 
 export function getSupabasePublicClient(): SupabaseClient {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
-    throw new Error('Supabase public client is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY.');
+  if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error('Supabase public client is not configured. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.');
   }
 
   if (!cachedPublicClient) {
-    cachedPublicClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+    cachedPublicClient = createClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
@@ -23,12 +23,12 @@ export function getSupabasePublicClient(): SupabaseClient {
 }
 
 export function getSupabaseAdminClient(): SupabaseClient {
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase admin client is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  if (!env.SUPABASE_URL || !env.SUPABASE_SECRET_KEY) {
+    throw new Error('Supabase admin client is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY.');
   }
 
   if (!cachedAdminClient) {
-    cachedAdminClient = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    cachedAdminClient = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false

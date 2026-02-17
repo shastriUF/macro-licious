@@ -9,8 +9,8 @@ This guide configures Supabase for MacroLicious in a staged way:
 1. Go to https://supabase.com and create a new project.
 2. Save:
    - `Project URL`
-   - `anon public key`
-   - `service_role key`
+  - `Publishable key`
+  - `Secret key`
 
 ## 2) Configure Auth (magic links)
 In Supabase dashboard:
@@ -27,8 +27,8 @@ In `backend/.env`:
 ```dotenv
 AUTH_PROVIDER=supabase
 SUPABASE_URL=https://<your-project-ref>.supabase.co
-SUPABASE_ANON_KEY=<your-anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+SUPABASE_PUBLISHABLE_KEY=<your-publishable-key>
+SUPABASE_SECRET_KEY=<your-secret-key>
 SUPABASE_EMAIL_REDIRECT_URL=macrolicious://auth/callback
 ```
 
