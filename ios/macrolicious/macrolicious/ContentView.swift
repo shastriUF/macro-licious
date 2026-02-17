@@ -48,16 +48,22 @@ struct ContentView: View {
                         }
                     }
 
-                    TextField("Token", text: $viewModel.token)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    if viewModel.showsManualTokenEntry {
+                        TextField("Token", text: $viewModel.token)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
 
-                    Button("Verify Magic Link") {
-                        Task {
-                            await viewModel.verifyMagicLink()
+                        Button("Verify Magic Link") {
+                            Task {
+                                await viewModel.verifyMagicLink()
+                            }
                         }
+                        .disabled(viewModel.token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    } else {
+                        Text("Check your email and tap the link to return to the app.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
-                    .disabled(viewModel.token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
 
                 Section("Profile") {

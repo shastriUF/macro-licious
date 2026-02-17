@@ -39,6 +39,12 @@ enum AuthCallbackParser {
 
 @MainActor
 final class AuthViewModel: ObservableObject {
+    enum SignInMode {
+        case unknown
+        case devToken
+        case emailLink
+    }
+
     @Published var email = ""
     @Published var token = ""
     @Published var baseURL: String
@@ -55,6 +61,7 @@ final class AuthViewModel: ObservableObject {
     @Published var ingredientProteinInput = ""
     @Published var ingredientFatInput = ""
     @Published var isLoading = false
+    @Published private(set) var signInMode: SignInMode = .unknown
 
     private let apiClient: APIClient
     private let sessionStore: SessionStore
@@ -70,9 +77,11 @@ final class AuthViewModel: ObservableObject {
             let response = try await apiClient.requestMagicLink(email: email, baseURL: normalizedBaseURL)
 
             if let issuedToken = response.token {
+                signInMode = .devToken
                 token = issuedToken
                 statusMessage = "Magic link requested. Dev token auto-filled for testing."
             } else {
+                signInMode = .emailLink
                 statusMessage = response.note ?? "Magic link requested. Check your email to continue sign-in."
             }
         }
@@ -85,6 +94,7 @@ final class AuthViewModel: ObservableObject {
             currentUser = response.user
             syncMacroInput(with: response.user)
             token = ""
+            signInMode = .unknown
             statusMessage = "Signed in as \(response.user.email). Token consumed; request a new one if needed."
         }
     }
@@ -253,6 +263,7 @@ final class AuthViewModel: ObservableObject {
         currentUser = nil
         ingredients = []
         token = ""
+        signInMode = .unknown
         caloriesInput = ""
         carbsInput = ""
         proteinInput = ""
@@ -261,13 +272,26 @@ final class AuthViewModel: ObservableObject {
     }
 
     func handleAuthCallback(url: URL) async {
+        guard url.scheme?.lowercased() == "macrolicious" else {
+            return
+        }
+
+        guard url.host?.lowercased() == "auth", url.path == "/callback" else {
+            return
+        }
+
         guard let accessToken = AuthCallbackParser.accessToken(from: url) else {
             statusMessage = "Auth callback received, but access token was missing."
             return
         }
 
+        signInMode = .emailLink
         token = accessToken
         await verifyMagicLink()
+    }
+
+    var showsManualTokenEntry: Bool {
+        signInMode == .devToken || signInMode == .unknown
     }
 
     func saveBaseURL() {
