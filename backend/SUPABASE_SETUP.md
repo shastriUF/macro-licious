@@ -68,7 +68,19 @@ Future schema changes:
 
 Do not edit production schema manually without a migration file.
 
-## 5) Staged auth behavior in current backend
+## 5) Run Supabase persistence smoke test
+After configuring `backend/.env` with `AUTH_PROVIDER=supabase`, run:
+
+```bash
+npm run smoke:supabase
+```
+
+This verifies:
+- profile/user row creation and lookup via Supabase,
+- ingredient write to Supabase,
+- data still present after in-memory store reset (restart-safety signal).
+
+## 6) Staged auth behavior in current backend
 Current implementation supports two auth modes:
 
 - `AUTH_PROVIDER=dev`
@@ -81,8 +93,7 @@ Current implementation supports two auth modes:
 
 This is intentional staging so you can migrate safely without breaking current local testing.
 
-## 6) Production hardening checklist (next step)
-- Move backend persistence from in-memory stores to Supabase Postgres tables
+## 7) Production hardening checklist (next step)
 - Replace token-paste staged verify with full deep-link callback exchange in iOS
 - Add Row Level Security policies and service-role boundary checks
 - Add provider-specific audit logging for auth events
