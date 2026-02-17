@@ -19,7 +19,7 @@ export const profileRoute: FastifyPluginAsync = async (app) => {
       });
     }
 
-    const user = authStore.getUserFromSession(sessionToken);
+    const user = await authStore.getUserFromSession(sessionToken);
     if (!user) {
       return reply.status(401).send({
         error: 'Invalid session token'
@@ -37,7 +37,7 @@ export const profileRoute: FastifyPluginAsync = async (app) => {
       });
     }
 
-    const user = authStore.getUserFromSession(sessionToken);
+    const user = await authStore.getUserFromSession(sessionToken);
     if (!user) {
       return reply.status(401).send({
         error: 'Invalid session token'
@@ -52,7 +52,7 @@ export const profileRoute: FastifyPluginAsync = async (app) => {
       });
     }
 
-    const updatedUser = authStore.updateMacroTargets(user.id, parsedBody.data);
+    const updatedUser = await authStore.updateMacroTargets(user.id, parsedBody.data);
     if (!updatedUser) {
       return reply.status(404).send({
         error: 'User not found'

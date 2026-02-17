@@ -24,7 +24,7 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: 'Missing bearer token' });
     }
 
-    const user = authStore.getUserFromSession(sessionToken);
+    const user = await authStore.getUserFromSession(sessionToken);
     if (!user) {
       return reply.status(401).send({ error: 'Invalid session token' });
     }
@@ -37,8 +37,13 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       });
     }
 
-    const ingredient = ingredientStore.create(user.id, parsedBody.data);
-    return reply.status(201).send({ ingredient });
+    try {
+      const ingredient = await ingredientStore.create(user.id, parsedBody.data);
+      return reply.status(201).send({ ingredient });
+    } catch (error) {
+      app.log.error({ error }, 'Failed to create ingredient');
+      return reply.status(500).send({ error: 'Failed to create ingredient' });
+    }
   });
 
   app.get('/ingredients', async (request, reply) => {
@@ -47,7 +52,7 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: 'Missing bearer token' });
     }
 
-    const user = authStore.getUserFromSession(sessionToken);
+    const user = await authStore.getUserFromSession(sessionToken);
     if (!user) {
       return reply.status(401).send({ error: 'Invalid session token' });
     }
@@ -58,8 +63,13 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       })
       .parse(request.query ?? {});
 
-    const ingredients = ingredientStore.listByUser(user.id, query.includeArchived);
-    return reply.send({ ingredients });
+    try {
+      const ingredients = await ingredientStore.listByUser(user.id, query.includeArchived);
+      return reply.send({ ingredients });
+    } catch (error) {
+      app.log.error({ error }, 'Failed to list ingredients');
+      return reply.status(500).send({ error: 'Failed to list ingredients' });
+    }
   });
 
   app.get('/ingredients/:ingredientId', async (request, reply) => {
@@ -68,13 +78,20 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: 'Missing bearer token' });
     }
 
-    const user = authStore.getUserFromSession(sessionToken);
+    const user = await authStore.getUserFromSession(sessionToken);
     if (!user) {
       return reply.status(401).send({ error: 'Invalid session token' });
     }
 
     const params = z.object({ ingredientId: z.string().min(1) }).parse(request.params);
-    const ingredient = ingredientStore.getById(user.id, params.ingredientId);
+    let ingredient;
+
+    try {
+      ingredient = await ingredientStore.getById(user.id, params.ingredientId);
+    } catch (error) {
+      app.log.error({ error }, 'Failed to fetch ingredient');
+      return reply.status(500).send({ error: 'Failed to fetch ingredient' });
+    }
 
     if (!ingredient) {
       return reply.status(404).send({ error: 'Ingredient not found' });
@@ -89,7 +106,7 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: 'Missing bearer token' });
     }
 
-    const user = authStore.getUserFromSession(sessionToken);
+    const user = await authStore.getUserFromSession(sessionToken);
     if (!user) {
       return reply.status(401).send({ error: 'Invalid session token' });
     }
@@ -108,7 +125,14 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       return reply.status(400).send({ error: 'No update fields provided' });
     }
 
-    const ingredient = ingredientStore.update(user.id, params.ingredientId, parsedBody.data);
+    let ingredient;
+
+    try {
+      ingredient = await ingredientStore.update(user.id, params.ingredientId, parsedBody.data);
+    } catch (error) {
+      app.log.error({ error }, 'Failed to update ingredient');
+      return reply.status(500).send({ error: 'Failed to update ingredient' });
+    }
     if (!ingredient) {
       return reply.status(404).send({ error: 'Ingredient not found' });
     }
@@ -122,13 +146,20 @@ export const ingredientRoute: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: 'Missing bearer token' });
     }
 
-    const user = authStore.getUserFromSession(sessionToken);
+    const user = await authStore.getUserFromSession(sessionToken);
     if (!user) {
       return reply.status(401).send({ error: 'Invalid session token' });
     }
 
     const params = z.object({ ingredientId: z.string().min(1) }).parse(request.params);
-    const ingredient = ingredientStore.archive(user.id, params.ingredientId);
+    let ingredient;
+
+    try {
+      ingredient = await ingredientStore.archive(user.id, params.ingredientId);
+    } catch (error) {
+      app.log.error({ error }, 'Failed to archive ingredient');
+      return reply.status(500).send({ error: 'Failed to archive ingredient' });
+    }
 
     if (!ingredient) {
       return reply.status(404).send({ error: 'Ingredient not found' });

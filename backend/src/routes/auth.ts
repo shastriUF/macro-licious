@@ -71,7 +71,7 @@ export const authRoute: FastifyPluginAsync = async (app) => {
     }
 
     if (env.AUTH_PROVIDER === 'dev') {
-      const verification = authStore.verifyMagicLink(result.data.token);
+      const verification = await authStore.verifyMagicLink(result.data.token);
 
       if (!verification) {
         return reply.status(401).send({
@@ -95,7 +95,7 @@ export const authRoute: FastifyPluginAsync = async (app) => {
         });
       }
 
-      const verification = authStore.createSessionForEmail(data.user.email);
+      const verification = await authStore.createSessionForEmail(data.user.email);
 
       return reply.send({
         sessionToken: verification.sessionToken,
