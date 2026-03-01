@@ -65,4 +65,70 @@ struct macroliciousTests {
         #expect(AuthCallbackParser.accessToken(from: missingTokenURL) == nil)
     }
 
+    // MARK: - Unit Conversion Tests
+
+    @Test func convertsGramsIdentity() {
+        #expect(UnitConversion.toGrams(100, unit: .g) == 100)
+    }
+
+    @Test func convertsOuncesToGrams() {
+        let result = UnitConversion.toGrams(1, unit: .oz)
+        #expect(abs(result - 28.3495) < 0.001)
+    }
+
+    @Test func convertsPoundsToGrams() {
+        let result = UnitConversion.toGrams(1, unit: .lb)
+        #expect(abs(result - 453.592) < 0.01)
+    }
+
+    @Test func convertsCupToMl() {
+        let result = UnitConversion.toMillilitres(1, unit: .cup)
+        #expect(abs(result - 236.588) < 0.01)
+    }
+
+    @Test func convertsVolumeToGramsWithDensity() {
+        // 1 cup water (density 1.0) ≈ 236.6 g
+        let result = UnitConversion.volumeToGrams(1, unit: .cup, densityGPerMl: 1.0)
+        #expect(result != nil)
+        #expect(abs(result! - 236.588) < 0.01)
+    }
+
+    @Test func volumeToGramsReturnsNilWithoutDensity() {
+        #expect(UnitConversion.volumeToGrams(1, unit: .cup, densityGPerMl: nil) == nil)
+    }
+
+    @Test func canonicalGramsForMassDoesNotRequireDensity() {
+        let result = UnitConversion.toCanonicalGrams(4, unit: .oz)
+        #expect(result != nil)
+        #expect(abs(result! - 113.398) < 0.1)
+    }
+
+    @Test func canonicalGramsForVolumeRequiresDensity() {
+        #expect(UnitConversion.toCanonicalGrams(1, unit: .cup) == nil)
+        #expect(UnitConversion.toCanonicalGrams(1, unit: .cup, densityGPerMl: 0.9) != nil)
+    }
+
+    @Test func computesNutritionForGrams() {
+        let chicken = UnitConversion.NutritionValues(calories: 165, carbs: 0, protein: 31, fat: 3.6)
+        let result = UnitConversion.computeNutrition(quantity: 200, unit: .g, per100g: chicken)
+        #expect(result != nil)
+        #expect(result!.calories == 330)
+        #expect(result!.protein == 62)
+        #expect(result!.fat == 7.2)
+    }
+
+    @Test func computeNutritionReturnsNilForVolumeWithoutDensity() {
+        let chicken = UnitConversion.NutritionValues(calories: 165, carbs: 0, protein: 31, fat: 3.6)
+        #expect(UnitConversion.computeNutrition(quantity: 1, unit: .cup, per100g: chicken) == nil)
+    }
+
+    @Test func quantityUnitClassification() {
+        #expect(QuantityUnit.g.isMass == true)
+        #expect(QuantityUnit.oz.isMass == true)
+        #expect(QuantityUnit.cup.isVolume == true)
+        #expect(QuantityUnit.tsp.isVolume == true)
+        #expect(QuantityUnit.g.isVolume == false)
+        #expect(QuantityUnit.cup.isMass == false)
+    }
+
 }
