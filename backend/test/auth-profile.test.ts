@@ -186,4 +186,50 @@ describe('auth and profile routes', () => {
 
     await app.close();
   });
+
+  it('supports sign-out and invalidates the session', async () => {
+    const app = buildApp();
+
+    const requestLinkResponse = await app.inject({
+      method: 'POST',
+      url: '/auth/magic-link/request',
+      payload: {
+        email: 'aniruddha@example.com'
+      }
+    });
+
+    const requestLinkBody = requestLinkResponse.json() as { token: string };
+
+    const verifyResponse = await app.inject({
+      method: 'POST',
+      url: '/auth/magic-link/verify',
+      payload: {
+        token: requestLinkBody.token
+      }
+    });
+
+    const verifyBody = verifyResponse.json() as { sessionToken: string };
+
+    const signOutResponse = await app.inject({
+      method: 'POST',
+      url: '/auth/sign-out',
+      headers: {
+        authorization: `Bearer ${verifyBody.sessionToken}`
+      }
+    });
+
+    expect(signOutResponse.statusCode).toBe(200);
+
+    const meAfterSignOutResponse = await app.inject({
+      method: 'GET',
+      url: '/me',
+      headers: {
+        authorization: `Bearer ${verifyBody.sessionToken}`
+      }
+    });
+
+    expect(meAfterSignOutResponse.statusCode).toBe(401);
+
+    await app.close();
+  });
 });

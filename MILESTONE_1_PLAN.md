@@ -1,6 +1,6 @@
 # Milestone 1 Plan — Foundation
 
-Last updated: 2026-02-15
+Last updated: 2026-03-01
 
 ## 1) Milestone Objective
 Set up the production-ready foundation for the app so Milestone 2 can focus on logging features without rework.
@@ -194,16 +194,18 @@ Status: ✅ Implemented
 2. Run full CI on main
 3. Ship first internal TestFlight build and verify backend connectivity from device
 
+Status: ✅ Completed
+
 ---
 
 ## 7) Definition of Done (Milestone 1)
-- [ ] iOS app and backend scaffolded with clear local run instructions
-- [ ] Email magic-link auth works end-to-end in dev/staging
-- [ ] User macro targets (calories, carbs, protein) can be edited and persisted
-- [ ] Ingredient CRUD works end-to-end from app to backend
-- [ ] Baseline tests exist and pass in CI
-- [ ] Internal TestFlight build is distributed and installs successfully
-- [ ] Core regression checklist executed after TestFlight build
+- [x] iOS app and backend scaffolded with clear local run instructions
+- [x] Email magic-link auth works end-to-end in dev/staging
+- [x] User macro targets (calories, carbs, protein) can be edited and persisted
+- [x] Ingredient CRUD works end-to-end from app to backend
+- [x] Baseline tests exist and pass in CI
+- [x] Internal TestFlight build is distributed and installs successfully
+- [x] Core regression checklist executed after TestFlight build
 
 ---
 

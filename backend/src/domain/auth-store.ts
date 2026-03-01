@@ -76,6 +76,12 @@ export class AuthStore {
       return null;
     }
 
+    const sessionTtlMs = env.SESSION_TTL_HOURS * 60 * 60 * 1000;
+    if (Date.now() - session.createdAt > sessionTtlMs) {
+      this.sessionsByToken.delete(sessionToken);
+      return null;
+    }
+
     if (env.AUTH_PROVIDER === 'supabase') {
       const supabase = getSupabaseAdminClient();
       const { data, error } = await supabase
@@ -95,6 +101,10 @@ export class AuthStore {
     }
 
     return this.usersById.get(session.userId) ?? null;
+  }
+
+  invalidateSession(sessionToken: string): boolean {
+    return this.sessionsByToken.delete(sessionToken);
   }
 
   async updateMacroTargets(userId: string, macroTargets: MacroTargets): Promise<User | null> {

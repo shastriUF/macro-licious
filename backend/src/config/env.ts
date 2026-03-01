@@ -10,6 +10,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   APP_NAME: z.string().min(1).default('MacroLicious API'),
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().min(1).max(120).default(15),
+  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(24 * 365).default(24 * 30),
   AUTH_PROVIDER: z.enum(['dev', 'supabase']).default('dev'),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),

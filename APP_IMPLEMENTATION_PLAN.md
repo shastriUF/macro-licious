@@ -313,18 +313,18 @@ Status: 🟡 Not started (plan created in `MILESTONE_5_PLAN.md`)
 - [x] Create iOS app project skeleton (SwiftUI) and backend service skeleton.
 - [x] Set up CI pipeline (build + tests + lint checks).
 - [x] Configure dev/staging/prod environment variables and secrets handling.
-- [ ] Establish API schema and versioning conventions.
+- [x] Establish API schema and versioning conventions.
 
 ### Auth & User Profile
 - [x] Implement email magic-link authentication.
 - [x] Add user profile and macro target settings (calories, carbs, protein).
-- [ ] Add sign-out/session expiration handling.
+- [x] Add sign-out/session expiration handling.
 
 ### Ingredient System
 - [x] Implement ingredient create/read/update/archive.
-- [ ] Support input units: g, oz, lb, ml, tsp, tbsp, cup.
-- [ ] Implement conversion engine with canonical storage and density-aware volume conversion.
-- [ ] Add manual custom ingredient creation flow optimized for raw produce.
+- [x] Support input units: g, oz, lb, ml, tsp, tbsp, cup.
+- [x] Implement conversion engine with canonical storage and density-aware volume conversion.
+- [x] Add manual custom ingredient creation flow optimized for raw produce.
 
 ### Meal Logging
 - [ ] Build daily diary screens (breakfast/lunch/dinner/snacks).

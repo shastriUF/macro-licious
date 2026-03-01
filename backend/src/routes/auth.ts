@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 
+import { extractBearerToken } from '../auth/session';
 import { env } from '../config/env';
 import { authStore } from '../domain/auth-store';
 import { getSupabasePublicClient } from '../integrations/supabase';
@@ -138,5 +139,19 @@ export const authRoute: FastifyPluginAsync = async (app) => {
       app.log.error({ error }, 'Supabase verification error');
       return reply.status(500).send({ error: 'Supabase auth is not configured correctly' });
     }
+  });
+
+  app.post('/auth/sign-out', async (request, reply) => {
+    const sessionToken = extractBearerToken(request);
+    if (!sessionToken) {
+      return reply.status(401).send({ error: 'Missing bearer token' });
+    }
+
+    const invalidated = authStore.invalidateSession(sessionToken);
+    if (!invalidated) {
+      return reply.status(401).send({ error: 'Invalid session token' });
+    }
+
+    return reply.send({ message: 'Signed out' });
   });
 };

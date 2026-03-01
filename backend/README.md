@@ -28,11 +28,21 @@ See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for full Supabase Auth + DB setup.
 - `npm run lint`
 - `npm test`
 
+## API versioning convention
+- Current foundation API remains unprefixed for Milestone 1 (`/health`, `/auth/*`, `/ingredients/*`).
+- First breaking API revision will introduce explicit `/v1` route prefixes while keeping old routes temporarily for migration.
+- Additive (non-breaking) fields are allowed in existing response payloads.
+- Breaking changes require:
+   1. new `/vN` endpoint surface,
+   2. migration notes in root `README.md`,
+   3. test coverage for both old/new behavior during transition window.
+
 ## Current endpoints
 - `GET /`
 - `GET /health`
 - `POST /auth/magic-link/request`
 - `POST /auth/magic-link/verify`
+- `POST /auth/sign-out`
 - `GET /me`
 - `PATCH /me/macro-targets`
 - `POST /ingredients`
