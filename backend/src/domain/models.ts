@@ -25,6 +25,7 @@ export type Ingredient = {
   name: string;
   brand: string | null;
   barcode: string | null;
+  densityGPerMl: number | null;
   caloriesPer100g: number;
   carbsPer100g: number;
   proteinPer100g: number;
@@ -38,6 +39,7 @@ export type CreateIngredientInput = {
   name: string;
   brand?: string;
   barcode?: string;
+  densityGPerMl?: number;
   caloriesPer100g: number;
   carbsPer100g: number;
   proteinPer100g: number;

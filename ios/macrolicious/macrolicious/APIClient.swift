@@ -125,6 +125,17 @@ final class APIClient {
         )
     }
 
+    func signOut(sessionToken: String, baseURL: String) async throws {
+        _ = try await send(
+            path: "/auth/sign-out",
+            method: "POST",
+            baseURL: baseURL,
+            body: Optional<Int>.none,
+            authToken: sessionToken,
+            decodeAs: SignOutResponse.self
+        )
+    }
+
     private func send<RequestBody: Encodable, ResponseBody: Decodable>(
         path: String,
         method: String,
@@ -163,4 +174,8 @@ final class APIClient {
 
         return try JSONDecoder().decode(ResponseBody.self, from: data)
     }
+}
+
+private struct SignOutResponse: Codable {
+    let message: String
 }

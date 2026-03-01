@@ -43,6 +43,7 @@ struct Ingredient: Codable, Equatable, Identifiable {
     let name: String
     let brand: String?
     let barcode: String?
+    let densityGPerMl: Double?
     let caloriesPer100g: Double
     let carbsPer100g: Double
     let proteinPer100g: Double
@@ -64,6 +65,7 @@ struct CreateIngredientRequest: Codable {
     let name: String
     let brand: String?
     let barcode: String?
+    let densityGPerMl: Double?
     let caloriesPer100g: Double
     let carbsPer100g: Double
     let proteinPer100g: Double
@@ -74,6 +76,7 @@ struct UpdateIngredientRequest: Codable {
     let name: String?
     let brand: String?
     let barcode: String?
+    let densityGPerMl: Double?
     let caloriesPer100g: Double?
     let carbsPer100g: Double?
     let proteinPer100g: Double?

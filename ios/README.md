@@ -28,3 +28,9 @@ Suggested structure:
 - URL scheme `macrolicious://auth/callback` is registered for app callback handling.
 - In `AUTH_PROVIDER=dev`, request endpoint returns a token and manual verify remains enabled in-app.
 - In `AUTH_PROVIDER=supabase`, request endpoint expects email-link sign-in; app waits for callback URL and then verifies automatically.
+
+## Ingredient entry behavior (current)
+- Produce Quick Add mode is enabled by default for faster fresh-produce entry.
+- Produce mode keeps fields weight-first: name + macros per 100g, with brand optional.
+- Optional density (`g/ml`) is captured when known so volume units can be converted accurately in later logging flows.
+- Sign out now calls backend `POST /auth/sign-out` and clears local session state.

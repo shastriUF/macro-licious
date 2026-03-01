@@ -9,6 +9,7 @@ const createIngredientSchema = z.object({
   name: z.string().min(1),
   brand: z.string().optional(),
   barcode: z.string().optional(),
+  densityGPerMl: z.number().positive().optional(),
   caloriesPer100g: z.number().nonnegative(),
   carbsPer100g: z.number().nonnegative(),
   proteinPer100g: z.number().nonnegative(),

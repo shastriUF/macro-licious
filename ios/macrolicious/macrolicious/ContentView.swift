@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var editingIngredient: Ingredient?
     @State private var editName = ""
     @State private var editBrand = ""
+    @State private var editDensity = ""
     @State private var editCalories = ""
     @State private var editCarbs = ""
     @State private var editProtein = ""
@@ -74,7 +75,9 @@ struct ContentView: View {
                     }
 
                     Button("Sign Out", role: .destructive) {
-                        viewModel.signOut()
+                        Task {
+                            await viewModel.signOut()
+                        }
                     }
 
                     if let user = viewModel.currentUser {
@@ -107,8 +110,20 @@ struct ContentView: View {
                         }
                     }
 
+                    Toggle("Produce Quick Add", isOn: $viewModel.isProduceModeEnabled)
+
+                    if viewModel.isProduceModeEnabled {
+                        Text("Produce mode is weight-first: name + macros per 100g, brand optional.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
                     TextField("Name", text: $viewModel.ingredientNameInput)
-                    TextField("Brand (optional)", text: $viewModel.ingredientBrandInput)
+                    if !viewModel.isProduceModeEnabled {
+                        TextField("Brand (optional)", text: $viewModel.ingredientBrandInput)
+                    }
+                    TextField("Density g/ml (optional)", text: $viewModel.ingredientDensityInput)
+                        .keyboardType(.decimalPad)
                     TextField("Calories / 100g", text: $viewModel.ingredientCaloriesInput)
                         .keyboardType(.decimalPad)
                     TextField("Carbs / 100g", text: $viewModel.ingredientCarbsInput)
@@ -136,6 +151,12 @@ struct ContentView: View {
                                 Text("P \(Int(ingredient.proteinPer100g)) • C \(Int(ingredient.carbsPer100g)) • F \(Int(ingredient.fatPer100g)) • kcal \(Int(ingredient.caloriesPer100g))")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
+
+                                if let density = ingredient.densityGPerMl {
+                                    Text("Density: \(density, specifier: "%.2f") g/ml")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
 
                                 HStack {
                                     Button("Edit") {
@@ -173,6 +194,8 @@ struct ContentView: View {
                         Section("Edit Ingredient") {
                             TextField("Name", text: $editName)
                             TextField("Brand (optional)", text: $editBrand)
+                            TextField("Density g/ml (optional)", text: $editDensity)
+                                .keyboardType(.decimalPad)
                             TextField("Calories / 100g", text: $editCalories)
                                 .keyboardType(.decimalPad)
                             TextField("Carbs / 100g", text: $editCarbs)
@@ -206,6 +229,11 @@ struct ContentView: View {
     private func beginEdit(_ ingredient: Ingredient) {
         editName = ingredient.name
         editBrand = ingredient.brand ?? ""
+        if let density = ingredient.densityGPerMl {
+            editDensity = String(density)
+        } else {
+            editDensity = ""
+        }
         editCalories = String(ingredient.caloriesPer100g)
         editCarbs = String(ingredient.carbsPer100g)
         editProtein = String(ingredient.proteinPer100g)
@@ -214,6 +242,8 @@ struct ContentView: View {
     }
 
     private func saveEditedIngredient(_ ingredient: Ingredient) async {
+        let density = editDensity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : Double(editDensity)
+
         guard
             let calories = Double(editCalories),
             let carbs = Double(editCarbs),
@@ -223,6 +253,7 @@ struct ContentView: View {
             carbs >= 0,
             protein >= 0,
             fat >= 0,
+            density == nil || density! > 0,
             !editName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else {
             return
@@ -234,6 +265,7 @@ struct ContentView: View {
             name: editName,
             brand: editBrand.isEmpty ? nil : editBrand,
             barcode: ingredient.barcode,
+            densityGPerMl: density,
             caloriesPer100g: calories,
             carbsPer100g: carbs,
             proteinPer100g: protein,

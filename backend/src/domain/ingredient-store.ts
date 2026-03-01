@@ -18,6 +18,7 @@ export class IngredientStore {
           name: input.name.trim(),
           brand: input.brand?.trim() || null,
           barcode: input.barcode?.trim() || null,
+          density_g_per_ml: input.densityGPerMl ?? null,
           calories_per_100g: input.caloriesPer100g,
           carbs_per_100g: input.carbsPer100g,
           protein_per_100g: input.proteinPer100g,
@@ -44,6 +45,7 @@ export class IngredientStore {
       name: input.name.trim(),
       brand: input.brand?.trim() || null,
       barcode: input.barcode?.trim() || null,
+      densityGPerMl: input.densityGPerMl ?? null,
       caloriesPer100g: input.caloriesPer100g,
       carbsPer100g: input.carbsPer100g,
       proteinPer100g: input.proteinPer100g,
@@ -119,6 +121,7 @@ export class IngredientStore {
       if (input.name !== undefined) updatePayload.name = input.name.trim();
       if (input.brand !== undefined) updatePayload.brand = input.brand.trim() || null;
       if (input.barcode !== undefined) updatePayload.barcode = input.barcode.trim() || null;
+      if (input.densityGPerMl !== undefined) updatePayload.density_g_per_ml = input.densityGPerMl;
       if (input.caloriesPer100g !== undefined) updatePayload.calories_per_100g = input.caloriesPer100g;
       if (input.carbsPer100g !== undefined) updatePayload.carbs_per_100g = input.carbsPer100g;
       if (input.proteinPer100g !== undefined) updatePayload.protein_per_100g = input.proteinPer100g;
@@ -154,6 +157,7 @@ export class IngredientStore {
       name: input.name !== undefined ? input.name.trim() : existingIngredient.name,
       brand: input.brand !== undefined ? input.brand.trim() || null : existingIngredient.brand,
       barcode: input.barcode !== undefined ? input.barcode.trim() || null : existingIngredient.barcode,
+      densityGPerMl: input.densityGPerMl ?? existingIngredient.densityGPerMl,
       caloriesPer100g: input.caloriesPer100g ?? existingIngredient.caloriesPer100g,
       carbsPer100g: input.carbsPer100g ?? existingIngredient.carbsPer100g,
       proteinPer100g: input.proteinPer100g ?? existingIngredient.proteinPer100g,
@@ -217,6 +221,7 @@ export class IngredientStore {
     name: string;
     brand: string | null;
     barcode: string | null;
+    density_g_per_ml: number | null;
     calories_per_100g: number;
     carbs_per_100g: number;
     protein_per_100g: number;
@@ -231,6 +236,7 @@ export class IngredientStore {
       name: row.name,
       brand: row.brand,
       barcode: row.barcode,
+      densityGPerMl: row.density_g_per_ml == null ? null : Number(row.density_g_per_ml),
       caloriesPer100g: Number(row.calories_per_100g),
       carbsPer100g: Number(row.carbs_per_100g),
       proteinPer100g: Number(row.protein_per_100g),

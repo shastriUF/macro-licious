@@ -92,6 +92,7 @@ describe('ingredient routes', () => {
       payload: {
         name: 'Olive Oil',
         brand: 'Store Brand',
+        densityGPerMl: 0.92,
         caloriesPer100g: 884,
         carbsPer100g: 0,
         proteinPer100g: 0,
@@ -128,11 +129,13 @@ describe('ingredient routes', () => {
     const patchBody = patchResponse.json() as {
       ingredient: {
         brand: string | null;
+        densityGPerMl: number | null;
         fatPer100g: number;
       };
     };
 
     expect(patchBody.ingredient.brand).toBe('Premium Store Brand');
+    expect(patchBody.ingredient.densityGPerMl).toBe(0.92);
     expect(patchBody.ingredient.fatPer100g).toBe(99.5);
 
     const archiveResponse = await app.inject({

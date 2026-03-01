@@ -56,10 +56,12 @@ final class AuthViewModel: ObservableObject {
     @Published var ingredients: [Ingredient] = []
     @Published var ingredientNameInput = ""
     @Published var ingredientBrandInput = ""
+    @Published var ingredientDensityInput = ""
     @Published var ingredientCaloriesInput = ""
     @Published var ingredientCarbsInput = ""
     @Published var ingredientProteinInput = ""
     @Published var ingredientFatInput = ""
+    @Published var isProduceModeEnabled = true
     @Published var isLoading = false
     @Published private(set) var signInMode: SignInMode = .unknown
 
@@ -147,11 +149,22 @@ final class AuthViewModel: ObservableObject {
             return
         }
 
+        let density = ingredientDensityInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? nil
+            : Double(ingredientDensityInput)
+        if let density, density <= 0 {
+            statusMessage = "Density must be greater than 0 when provided."
+            return
+        }
+
+        let normalizedBrand = ingredientBrandInput.trimmingCharacters(in: .whitespacesAndNewlines)
+
         await perform {
             let request = CreateIngredientRequest(
                 name: ingredientNameInput,
-                brand: ingredientBrandInput.isEmpty ? nil : ingredientBrandInput,
+                brand: normalizedBrand.isEmpty ? nil : normalizedBrand,
                 barcode: nil,
+                densityGPerMl: density,
                 caloriesPer100g: calories,
                 carbsPer100g: carbs,
                 proteinPer100g: protein,
@@ -182,6 +195,7 @@ final class AuthViewModel: ObservableObject {
                 name: ingredient.name,
                 brand: ingredient.brand,
                 barcode: ingredient.barcode,
+                densityGPerMl: ingredient.densityGPerMl,
                 caloriesPer100g: ingredient.caloriesPer100g,
                 carbsPer100g: ingredient.carbsPer100g,
                 proteinPer100g: ingredient.proteinPer100g,
@@ -258,17 +272,25 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    func signOut() {
-        sessionStore.clearSession()
-        currentUser = nil
-        ingredients = []
-        token = ""
-        signInMode = .unknown
-        caloriesInput = ""
-        carbsInput = ""
-        proteinInput = ""
-        resetIngredientInput()
-        statusMessage = "Signed out."
+    func signOut() async {
+        let sessionToken = sessionStore.sessionToken
+
+        await perform {
+            if let sessionToken {
+                _ = try? await apiClient.signOut(sessionToken: sessionToken, baseURL: normalizedBaseURL)
+            }
+
+            sessionStore.clearSession()
+            currentUser = nil
+            ingredients = []
+            token = ""
+            signInMode = .unknown
+            caloriesInput = ""
+            carbsInput = ""
+            proteinInput = ""
+            resetIngredientInput()
+            statusMessage = "Signed out."
+        }
     }
 
     func handleAuthCallback(url: URL) async {
@@ -324,6 +346,7 @@ final class AuthViewModel: ObservableObject {
     private func resetIngredientInput() {
         ingredientNameInput = ""
         ingredientBrandInput = ""
+        ingredientDensityInput = ""
         ingredientCaloriesInput = ""
         ingredientCarbsInput = ""
         ingredientProteinInput = ""
