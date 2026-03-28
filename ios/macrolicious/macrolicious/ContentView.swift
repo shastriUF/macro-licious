@@ -11,6 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel: AuthViewModel
     @State private var editingIngredient: Ingredient?
+    @State private var archiveCandidate: Ingredient?
     @State private var editName = ""
     @State private var editBrand = ""
     @State private var editDensity = ""
@@ -162,14 +163,14 @@ struct ContentView: View {
                                     Button("Edit") {
                                         beginEdit(ingredient)
                                     }
+                                    .buttonStyle(.borderless)
 
                                     Spacer()
 
                                     Button("Archive", role: .destructive) {
-                                        Task {
-                                            await viewModel.archiveIngredient(ingredient.id)
-                                        }
+                                        archiveCandidate = ingredient
                                     }
+                                    .buttonStyle(.borderless)
                                 }
                             }
                             .padding(.vertical, 4)
@@ -188,6 +189,32 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("MacroLicious")
+            .confirmationDialog(
+                "Archive ingredient?",
+                isPresented: Binding(
+                    get: { archiveCandidate != nil },
+                    set: { isPresented in
+                        if !isPresented {
+                            archiveCandidate = nil
+                        }
+                    }
+                ),
+                titleVisibility: .visible,
+                presenting: archiveCandidate
+            ) { ingredient in
+                Button("Archive \(ingredient.name)", role: .destructive) {
+                    Task {
+                        await viewModel.archiveIngredient(ingredient.id)
+                    }
+                    archiveCandidate = nil
+                }
+
+                Button("Cancel", role: .cancel) {
+                    archiveCandidate = nil
+                }
+            } message: { ingredient in
+                Text("\(ingredient.name) will be hidden from the default ingredient list.")
+            }
             .sheet(item: $editingIngredient) { ingredient in
                 NavigationStack {
                     Form {
