@@ -14,7 +14,9 @@ By end of Milestone 2:
 Current status snapshot:
 - ✅ Backend meal-log API, domain store, and integration tests implemented.
 - ✅ `meal_logs` + `meal_log_items` migration created and pushed to staging Supabase.
-- 🟡 iOS diary implementation not started yet (next critical path).
+- ✅ iOS diary flow implemented (ingredient-library + manual snapshot logging, add/edit/delete, daily totals).
+- ✅ iOS diary UX/stability pass completed (segmented entry modes, computed validation feedback, safer loading behavior).
+- 🟡 Remaining: macro target progress visualization in diary + dedicated diary UI tests + device smoke pass.
 
 ---
 
@@ -49,9 +51,9 @@ Current status snapshot:
 - [x] `meal_log_items` (meal_log_id + ingredient reference + quantity snapshot + nutrition snapshot)
 
 ## 3.3 iOS
-- [ ] Diary screen grouped by meal type
-- [ ] Add/edit/delete item interactions
-- [ ] Totals and macro target progress UI
+- [x] Diary screen with meal-type selector and date-based log listing
+- [x] Add/edit/delete item interactions
+- [ ] Totals and macro target progress UI (totals complete, target progress pending)
 
 ---
 
@@ -67,9 +69,9 @@ Current status snapshot:
 - [ ] UI tests for add/edit/delete meal log entry
 
 Milestone exit criteria:
-- backend tests + lint + typecheck green
-- iOS tests green
-- real-device smoke run of diary workflow
+- ✅ backend tests + lint + typecheck green
+- ✅ iOS tests green
+- ⏳ real-device smoke run of diary workflow
 
 ---
 
@@ -87,20 +89,20 @@ Status: ✅ Completed
 2. Add diary UI sections and add/edit/delete controls
 3. Wire daily totals + target progress
 
-Status: ⏳ Not started
+Status: ✅ Completed for core logging; target-progress UI remains.
 
 ## Phase C — Hardening
 1. Add tests (backend + iOS)
 2. Run TestFlight smoke pass
 3. Fix regressions and finalize milestone
 
-Status: 🟡 In progress (backend tests complete; iOS test + smoke steps pending)
+Status: 🟡 In progress (backend + iOS tests green; UI tests + TestFlight smoke pending)
 
 ---
 
 ## 6) Definition of Done
-- [ ] Meal log CRUD works end-to-end
-- [ ] Daily totals match backend-calculated values
+- [x] Meal log CRUD works end-to-end
+- [x] Daily totals match backend-calculated values
 - [ ] Macro target progress is visible and correct
 - [ ] Tests cover critical logging and calculation paths
 - [ ] Milestone TestFlight build validated on device

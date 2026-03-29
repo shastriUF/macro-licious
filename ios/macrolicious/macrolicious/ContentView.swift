@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 @MainActor
 struct ContentView: View {
@@ -362,6 +363,8 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
+            .dismissKeyboardOnTap()
             .navigationTitle("MacroLicious")
             .onChange(of: viewModel.diaryDate) { _, _ in
                 guard viewModel.currentUser != nil else {
@@ -442,6 +445,8 @@ struct ContentView: View {
                                 .keyboardType(.decimalPad)
                         }
                     }
+                    .scrollDismissesKeyboard(.interactively)
+                    .dismissKeyboardOnTap()
                     .navigationTitle(ingredient.name)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
@@ -472,6 +477,8 @@ struct ContentView: View {
                             TextField("Notes (optional)", text: $editMealNotes)
                         }
                     }
+                    .scrollDismissesKeyboard(.interactively)
+                    .dismissKeyboardOnTap()
                     .navigationTitle(mealLog.mealType.label)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
@@ -604,6 +611,14 @@ private enum MealLogEntryMode: String, CaseIterable, Identifiable {
             return "Library"
         case .manualSnapshot:
             return "Manual"
+        }
+    }
+}
+
+private extension View {
+    func dismissKeyboardOnTap() -> some View {
+        onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
     }
 }
