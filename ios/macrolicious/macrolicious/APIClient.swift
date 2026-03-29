@@ -136,6 +136,67 @@ final class APIClient {
         )
     }
 
+    func listMealLogs(
+        sessionToken: String,
+        baseURL: String,
+        date: String
+    ) async throws -> MealLogsResponse {
+        try await send(
+            path: "/meal-logs?date=\(date)",
+            method: "GET",
+            baseURL: baseURL,
+            body: Optional<Int>.none,
+            authToken: sessionToken,
+            decodeAs: MealLogsResponse.self
+        )
+    }
+
+    func createMealLog(
+        sessionToken: String,
+        baseURL: String,
+        request: CreateMealLogRequest
+    ) async throws -> MealLogResponse {
+        try await send(
+            path: "/meal-logs",
+            method: "POST",
+            baseURL: baseURL,
+            body: request,
+            authToken: sessionToken,
+            decodeAs: MealLogResponse.self
+        )
+    }
+
+    func updateMealLog(
+        sessionToken: String,
+        baseURL: String,
+        mealLogId: String,
+        request: UpdateMealLogRequest
+    ) async throws -> MealLogResponse {
+        try await send(
+            path: "/meal-logs/\(mealLogId)",
+            method: "PATCH",
+            baseURL: baseURL,
+            body: request,
+            authToken: sessionToken,
+            decodeAs: MealLogResponse.self
+        )
+    }
+
+    func deleteMealLog(
+        sessionToken: String,
+        baseURL: String,
+        mealLogId: String
+    ) async throws {
+        _ = try await send(
+            path: "/meal-logs/\(mealLogId)",
+            method: "DELETE",
+            baseURL: baseURL,
+            body: Optional<Int>.none,
+            authToken: sessionToken,
+            decodeAs: EmptyResponse.self
+        )
+    }
+
     private func send<RequestBody: Encodable, ResponseBody: Decodable>(
         path: String,
         method: String,
@@ -172,6 +233,10 @@ final class APIClient {
             throw APIClientError.httpError(httpResponse.statusCode, apiMessage)
         }
 
+        if data.isEmpty, ResponseBody.self == EmptyResponse.self {
+            return EmptyResponse() as! ResponseBody
+        }
+
         return try JSONDecoder().decode(ResponseBody.self, from: data)
     }
 }
@@ -179,3 +244,5 @@ final class APIClient {
 private struct SignOutResponse: Codable {
     let message: String
 }
+
+private struct EmptyResponse: Codable {}

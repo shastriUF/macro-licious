@@ -61,12 +61,67 @@ final class AuthViewModel: ObservableObject {
     @Published var ingredientCarbsInput = ""
     @Published var ingredientProteinInput = ""
     @Published var ingredientFatInput = ""
+    @Published var diaryDate = Date()
+    @Published var mealLogs: [MealLog] = []
+    @Published var dailyTotals = MealLogNutrition(calories: 0, carbs: 0, protein: 0, fat: 0)
+    @Published var selectedMealType: MealType = .breakfast
+    @Published var useIngredientForMealLog = true
+    @Published var selectedMealIngredientId = ""
+    @Published var mealNotesInput = ""
+    @Published var mealIngredientNameInput = ""
+    @Published var mealQuantityValueInput = ""
+    @Published var mealQuantityUnit: QuantityUnit = .g
+    @Published var mealConsumedGramsInput = ""
+    @Published var mealCaloriesInput = ""
+    @Published var mealCarbsInput = ""
+    @Published var mealProteinInput = ""
+    @Published var mealFatInput = ""
     @Published var isProduceModeEnabled = true
     @Published var isLoading = false
     @Published private(set) var signInMode: SignInMode = .unknown
 
     private let apiClient: APIClient
     private let sessionStore: SessionStore
+
+    var selectedMealIngredient: Ingredient? {
+        ingredients.first(where: { $0.id == selectedMealIngredientId })
+    }
+
+    var mealLogPreview: MealLogComputationPreview? {
+        guard useIngredientForMealLog,
+              let ingredient = selectedMealIngredient,
+              let quantity = Double(mealQuantityValueInput),
+              quantity > 0,
+              let consumedGrams = UnitConversion.toCanonicalGrams(
+                quantity,
+                unit: mealQuantityUnit,
+                densityGPerMl: ingredient.densityGPerMl
+              ),
+              let nutrition = UnitConversion.computeNutrition(
+                quantity: quantity,
+                unit: mealQuantityUnit,
+                per100g: UnitConversion.NutritionValues(
+                    calories: ingredient.caloriesPer100g,
+                    carbs: ingredient.carbsPer100g,
+                    protein: ingredient.proteinPer100g,
+                    fat: ingredient.fatPer100g
+                ),
+                densityGPerMl: ingredient.densityGPerMl
+              )
+        else {
+            return nil
+        }
+
+        return MealLogComputationPreview(
+            consumedGrams: consumedGrams,
+            nutrition: MealLogNutrition(
+                calories: nutrition.calories,
+                carbs: nutrition.carbs,
+                protein: nutrition.protein,
+                fat: nutrition.fat
+            )
+        )
+    }
 
     init(apiClient: APIClient = APIClient(), sessionStore: SessionStore = SessionStore()) {
         self.apiClient = apiClient
@@ -101,10 +156,18 @@ final class AuthViewModel: ObservableObject {
                 baseURL: normalizedBaseURL
             )
             ingredients = ingredientResponse.ingredients
+            syncMealIngredientSelection()
+
+            let mealLogResponse = try await apiClient.listMealLogs(
+                sessionToken: response.sessionToken,
+                baseURL: normalizedBaseURL,
+                date: currentDiaryDateString
+            )
+            applyDiaryResponse(mealLogResponse)
 
             token = ""
             signInMode = .unknown
-            statusMessage = "Signed in as \(response.user.email). Loaded \(ingredients.count) ingredients."
+            statusMessage = "Signed in as \(response.user.email). Loaded \(ingredients.count) ingredients and \(mealLogs.count) meal logs."
         }
     }
 
@@ -131,6 +194,7 @@ final class AuthViewModel: ObservableObject {
         await perform {
             let response = try await apiClient.listIngredients(sessionToken: sessionToken, baseURL: normalizedBaseURL)
             ingredients = response.ingredients
+            syncMealIngredientSelection()
             statusMessage = "Ingredients refreshed."
         }
     }
@@ -186,8 +250,177 @@ final class AuthViewModel: ObservableObject {
 
             ingredients.append(response.ingredient)
             ingredients.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            syncMealIngredientSelection()
             resetIngredientInput()
             statusMessage = "Ingredient created."
+        }
+    }
+
+    func refreshMealLogs() async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        await perform {
+            let response = try await apiClient.listMealLogs(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                date: currentDiaryDateString
+            )
+            applyDiaryResponse(response)
+            statusMessage = "Diary refreshed."
+        }
+    }
+
+    func createMealLog() async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        let createItem: CreateMealLogItemRequest
+
+        if useIngredientForMealLog {
+            guard let ingredient = selectedMealIngredient else {
+                statusMessage = "Select an ingredient before adding a meal log."
+                return
+            }
+
+            guard let quantityValue = Double(mealQuantityValueInput), quantityValue > 0 else {
+                statusMessage = "Enter a valid quantity before adding a meal log."
+                return
+            }
+
+            guard let preview = mealLogPreview else {
+                statusMessage = "Cannot compute nutrition for the selected unit. Use a mass unit or provide ingredient density."
+                return
+            }
+
+            createItem = CreateMealLogItemRequest(
+                ingredientId: ingredient.id,
+                ingredientName: ingredient.name,
+                quantityValue: quantityValue,
+                quantityUnit: mealQuantityUnit,
+                consumedGrams: preview.consumedGrams,
+                nutrition: preview.nutrition
+            )
+        } else {
+            guard
+                !mealIngredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                let quantityValue = Double(mealQuantityValueInput),
+                let consumedGrams = Double(mealConsumedGramsInput),
+                let calories = Double(mealCaloriesInput),
+                let carbs = Double(mealCarbsInput),
+                let protein = Double(mealProteinInput),
+                let fat = Double(mealFatInput),
+                quantityValue > 0,
+                consumedGrams > 0,
+                calories >= 0,
+                carbs >= 0,
+                protein >= 0,
+                fat >= 0
+            else {
+                statusMessage = "Enter valid manual meal-log values before adding an entry."
+                return
+            }
+
+            createItem = CreateMealLogItemRequest(
+                ingredientId: nil,
+                ingredientName: mealIngredientNameInput,
+                quantityValue: quantityValue,
+                quantityUnit: mealQuantityUnit,
+                consumedGrams: consumedGrams,
+                nutrition: MealLogNutrition(
+                    calories: calories,
+                    carbs: carbs,
+                    protein: protein,
+                    fat: fat
+                )
+            )
+        }
+
+        await perform {
+            let createRequest = CreateMealLogRequest(
+                date: currentDiaryDateString,
+                mealType: selectedMealType,
+                notes: mealNotesInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    ? nil
+                    : mealNotesInput,
+                items: [createItem]
+            )
+
+            _ = try await apiClient.createMealLog(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                request: createRequest
+            )
+
+            let response = try await apiClient.listMealLogs(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                date: currentDiaryDateString
+            )
+
+            applyDiaryResponse(response)
+            resetMealLogInput()
+            statusMessage = "Meal log entry created."
+        }
+    }
+
+    func updateMealLog(mealLogId: String, mealType: MealType, notes: String?) async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        await perform {
+            let request = UpdateMealLogRequest(
+                date: nil,
+                mealType: mealType,
+                notes: notes,
+                items: nil
+            )
+
+            _ = try await apiClient.updateMealLog(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                mealLogId: mealLogId,
+                request: request
+            )
+
+            let response = try await apiClient.listMealLogs(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                date: currentDiaryDateString
+            )
+
+            applyDiaryResponse(response)
+            statusMessage = "Meal log updated."
+        }
+    }
+
+    func deleteMealLog(_ mealLogId: String) async {
+        guard let sessionToken = sessionStore.sessionToken else {
+            statusMessage = "No session token saved."
+            return
+        }
+
+        await perform {
+            try await apiClient.deleteMealLog(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                mealLogId: mealLogId
+            )
+
+            let response = try await apiClient.listMealLogs(
+                sessionToken: sessionToken,
+                baseURL: normalizedBaseURL,
+                date: currentDiaryDateString
+            )
+
+            applyDiaryResponse(response)
+            statusMessage = "Meal log deleted."
         }
     }
 
@@ -238,6 +471,7 @@ final class AuthViewModel: ObservableObject {
             )
 
             ingredients.removeAll { $0.id == ingredientId }
+            syncMealIngredientSelection()
             statusMessage = "Ingredient archived."
         }
     }
@@ -290,12 +524,16 @@ final class AuthViewModel: ObservableObject {
             sessionStore.clearSession()
             currentUser = nil
             ingredients = []
+            mealLogs = []
+            dailyTotals = MealLogNutrition(calories: 0, carbs: 0, protein: 0, fat: 0)
+            selectedMealIngredientId = ""
             token = ""
             signInMode = .unknown
             caloriesInput = ""
             carbsInput = ""
             proteinInput = ""
             resetIngredientInput()
+            resetMealLogInput()
             statusMessage = "Signed out."
         }
     }
@@ -333,6 +571,18 @@ final class AuthViewModel: ObservableObject {
         return trimmed.hasSuffix("/") ? String(trimmed.dropLast()) : trimmed
     }
 
+    private var currentDiaryDateString: String {
+        Self.diaryDateFormatter.string(from: diaryDate)
+    }
+
+    private static let diaryDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
     private func perform(_ operation: () async throws -> Void) async {
         isLoading = true
         defer { isLoading = false }
@@ -359,4 +609,54 @@ final class AuthViewModel: ObservableObject {
         ingredientProteinInput = ""
         ingredientFatInput = ""
     }
+
+    private func resetMealLogInput() {
+        mealNotesInput = ""
+        mealIngredientNameInput = ""
+        mealQuantityValueInput = ""
+        mealQuantityUnit = .g
+        mealConsumedGramsInput = ""
+        mealCaloriesInput = ""
+        mealCarbsInput = ""
+        mealProteinInput = ""
+        mealFatInput = ""
+    }
+
+    private func syncMealIngredientSelection() {
+        guard !ingredients.isEmpty else {
+            selectedMealIngredientId = ""
+            return
+        }
+
+        if ingredients.contains(where: { $0.id == selectedMealIngredientId }) {
+            return
+        }
+
+        selectedMealIngredientId = ingredients[0].id
+    }
+
+    private func applyDiaryResponse(_ response: MealLogsResponse) {
+        mealLogs = response.mealLogs.sorted { lhs, rhs in
+            if mealTypeSortKey(lhs.mealType) == mealTypeSortKey(rhs.mealType) {
+                return lhs.createdAt < rhs.createdAt
+            }
+
+            return mealTypeSortKey(lhs.mealType) < mealTypeSortKey(rhs.mealType)
+        }
+        dailyTotals = response.totals
+    }
+
+    private func mealTypeSortKey(_ mealType: MealType) -> Int {
+        switch mealType {
+        case .breakfast: return 0
+        case .lunch: return 1
+        case .dinner: return 2
+        case .snack: return 3
+        }
+    }
+}
+
+struct MealLogComputationPreview {
+    let consumedGrams: Double
+    let nutrition: MealLogNutrition
 }

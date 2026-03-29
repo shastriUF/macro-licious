@@ -86,3 +86,85 @@ struct UpdateIngredientRequest: Codable {
 struct APIErrorResponse: Codable {
     let error: String
 }
+
+enum MealType: String, Codable, CaseIterable, Identifiable {
+    case breakfast
+    case lunch
+    case dinner
+    case snack
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .breakfast: return "Breakfast"
+        case .lunch: return "Lunch"
+        case .dinner: return "Dinner"
+        case .snack: return "Snack"
+        }
+    }
+}
+
+struct MealLogNutrition: Codable, Equatable {
+    let calories: Double
+    let carbs: Double
+    let protein: Double
+    let fat: Double
+}
+
+struct MealLogItem: Codable, Equatable, Identifiable {
+    let id: String
+    let mealLogId: String
+    let ingredientId: String?
+    let ingredientName: String
+    let quantityValue: Double
+    let quantityUnit: QuantityUnit
+    let consumedGrams: Double
+    let nutrition: MealLogNutrition
+    let createdAt: String
+    let updatedAt: String
+}
+
+struct MealLog: Codable, Equatable, Identifiable {
+    let id: String
+    let userId: String
+    let date: String
+    let mealType: MealType
+    let notes: String?
+    let items: [MealLogItem]
+    let createdAt: String
+    let updatedAt: String
+}
+
+struct MealLogResponse: Codable {
+    let mealLog: MealLog
+}
+
+struct MealLogsResponse: Codable {
+    let date: String
+    let mealLogs: [MealLog]
+    let totals: MealLogNutrition
+}
+
+struct CreateMealLogItemRequest: Codable {
+    let ingredientId: String?
+    let ingredientName: String
+    let quantityValue: Double
+    let quantityUnit: QuantityUnit
+    let consumedGrams: Double
+    let nutrition: MealLogNutrition
+}
+
+struct CreateMealLogRequest: Codable {
+    let date: String
+    let mealType: MealType
+    let notes: String?
+    let items: [CreateMealLogItemRequest]
+}
+
+struct UpdateMealLogRequest: Codable {
+    let date: String?
+    let mealType: MealType?
+    let notes: String?
+    let items: [CreateMealLogItemRequest]?
+}

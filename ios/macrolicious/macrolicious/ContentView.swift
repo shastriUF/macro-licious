@@ -12,6 +12,8 @@ struct ContentView: View {
     @StateObject private var viewModel: AuthViewModel
     @State private var editingIngredient: Ingredient?
     @State private var archiveCandidate: Ingredient?
+    @State private var editingMealLog: MealLog?
+    @State private var deleteMealLogCandidate: MealLog?
     @State private var editName = ""
     @State private var editBrand = ""
     @State private var editDensity = ""
@@ -19,6 +21,8 @@ struct ContentView: View {
     @State private var editCarbs = ""
     @State private var editProtein = ""
     @State private var editFat = ""
+    @State private var editMealType: MealType = .breakfast
+    @State private var editMealNotes = ""
 
     init(viewModel: AuthViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -101,6 +105,152 @@ struct ContentView: View {
                     } else {
                         Text("No signed-in user")
                             .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section("Diary") {
+                    DatePicker("Date", selection: $viewModel.diaryDate, displayedComponents: .date)
+
+                    Button("Refresh Diary") {
+                        Task {
+                            await viewModel.refreshMealLogs()
+                        }
+                    }
+
+                    Picker("Meal Type", selection: $viewModel.selectedMealType) {
+                        ForEach(MealType.allCases) { mealType in
+                            Text(mealType.label).tag(mealType)
+                        }
+                    }
+
+                    TextField("Notes (optional)", text: $viewModel.mealNotesInput)
+                    Toggle("Use Ingredient Library", isOn: $viewModel.useIngredientForMealLog)
+
+                    if viewModel.useIngredientForMealLog {
+                        if viewModel.ingredients.isEmpty {
+                            Text("No ingredients yet. Create one below or switch to manual entry.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Picker("Ingredient", selection: $viewModel.selectedMealIngredientId) {
+                                ForEach(viewModel.ingredients) { ingredient in
+                                    Text(ingredient.name).tag(ingredient.id)
+                                }
+                            }
+                            .pickerStyle(.menu)
+
+                            if let ingredient = viewModel.selectedMealIngredient {
+                                Text(
+                                    "Per 100g: kcal \(Int(ingredient.caloriesPer100g)) • C \(Int(ingredient.carbsPer100g)) • P \(Int(ingredient.proteinPer100g)) • F \(Int(ingredient.fatPer100g))"
+                                )
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+
+                                if let density = ingredient.densityGPerMl {
+                                    Text("Density: \(density, specifier: "%.2f") g/ml")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    } else {
+                        TextField("Ingredient name", text: $viewModel.mealIngredientNameInput)
+                    }
+
+                    HStack {
+                        TextField("Quantity", text: $viewModel.mealQuantityValueInput)
+                            .keyboardType(.decimalPad)
+                        Picker("Unit", selection: $viewModel.mealQuantityUnit) {
+                            ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
+                                Text(unit.label).tag(unit)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+
+                    if viewModel.useIngredientForMealLog {
+                        if let preview = viewModel.mealLogPreview {
+                            Text(
+                                "Computed: \(preview.consumedGrams, specifier: "%.1f")g • kcal \(Int(preview.nutrition.calories)) • C \(Int(preview.nutrition.carbs)) • P \(Int(preview.nutrition.protein)) • F \(Int(preview.nutrition.fat))"
+                            )
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        } else if !viewModel.mealQuantityValueInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            Text("Unable to compute nutrition. Use a mass unit or ensure the ingredient has density for volume units.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        TextField("Consumed grams", text: $viewModel.mealConsumedGramsInput)
+                            .keyboardType(.decimalPad)
+                        TextField("Calories", text: $viewModel.mealCaloriesInput)
+                            .keyboardType(.decimalPad)
+                        TextField("Carbs", text: $viewModel.mealCarbsInput)
+                            .keyboardType(.decimalPad)
+                        TextField("Protein", text: $viewModel.mealProteinInput)
+                            .keyboardType(.decimalPad)
+                        TextField("Fat", text: $viewModel.mealFatInput)
+                            .keyboardType(.decimalPad)
+                    }
+
+                    Button("Add Meal Log Entry") {
+                        Task {
+                            await viewModel.createMealLog()
+                        }
+                    }
+
+                    Text(
+                        "Totals: kcal \(Int(viewModel.dailyTotals.calories)) • C \(Int(viewModel.dailyTotals.carbs)) • P \(Int(viewModel.dailyTotals.protein)) • F \(Int(viewModel.dailyTotals.fat))"
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                    if viewModel.mealLogs.isEmpty {
+                        Text("No meal logs for selected date")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(viewModel.mealLogs) { mealLog in
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Text(mealLog.mealType.label)
+                                        .font(.headline)
+                                    Spacer()
+                                    Text(mealLog.date)
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                if let notes = mealLog.notes, !notes.isEmpty {
+                                    Text(notes)
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                ForEach(mealLog.items) { item in
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(item.ingredientName)
+                                        Text(
+                                            "\(item.quantityValue, specifier: "%.2f") \(item.quantityUnit.label) • \(item.consumedGrams, specifier: "%.1f")g • kcal \(Int(item.nutrition.calories))"
+                                        )
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                Button("Edit") {
+                                    beginMealLogEdit(mealLog)
+                                }
+                                .tint(.blue)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button("Delete", role: .destructive) {
+                                    deleteMealLogCandidate = mealLog
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
                     }
                 }
 
@@ -187,6 +337,11 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("MacroLicious")
+            .onChange(of: viewModel.diaryDate) { _, _ in
+                Task {
+                    await viewModel.refreshMealLogs()
+                }
+            }
             .confirmationDialog(
                 "Archive ingredient?",
                 isPresented: Binding(
@@ -212,6 +367,32 @@ struct ContentView: View {
                 }
             } message: { ingredient in
                 Text("\(ingredient.name) will be hidden from the default ingredient list.")
+            }
+            .confirmationDialog(
+                "Delete meal log?",
+                isPresented: Binding(
+                    get: { deleteMealLogCandidate != nil },
+                    set: { isPresented in
+                        if !isPresented {
+                            deleteMealLogCandidate = nil
+                        }
+                    }
+                ),
+                titleVisibility: .visible,
+                presenting: deleteMealLogCandidate
+            ) { mealLog in
+                Button("Delete \(mealLog.mealType.label)", role: .destructive) {
+                    Task {
+                        await viewModel.deleteMealLog(mealLog.id)
+                    }
+                    deleteMealLogCandidate = nil
+                }
+
+                Button("Cancel", role: .cancel) {
+                    deleteMealLogCandidate = nil
+                }
+            } message: { mealLog in
+                Text("This will remove the \(mealLog.mealType.label.lowercased()) meal log entry for \(mealLog.date).")
             }
             .sheet(item: $editingIngredient) { ingredient in
                 NavigationStack {
@@ -242,6 +423,36 @@ struct ContentView: View {
                             Button("Save") {
                                 Task {
                                     await saveEditedIngredient(ingredient)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .sheet(item: $editingMealLog) { mealLog in
+                NavigationStack {
+                    Form {
+                        Section("Edit Meal Log") {
+                            Picker("Meal Type", selection: $editMealType) {
+                                ForEach(MealType.allCases) { mealType in
+                                    Text(mealType.label).tag(mealType)
+                                }
+                            }
+
+                            TextField("Notes (optional)", text: $editMealNotes)
+                        }
+                    }
+                    .navigationTitle(mealLog.mealType.label)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") {
+                                editingMealLog = nil
+                            }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") {
+                                Task {
+                                    await saveEditedMealLog(mealLog)
                                 }
                             }
                         }
@@ -302,6 +513,24 @@ struct ContentView: View {
 
         await viewModel.updateIngredient(updatedIngredient)
         editingIngredient = nil
+    }
+
+    private func beginMealLogEdit(_ mealLog: MealLog) {
+        editMealType = mealLog.mealType
+        editMealNotes = mealLog.notes ?? ""
+        editingMealLog = mealLog
+    }
+
+    private func saveEditedMealLog(_ mealLog: MealLog) async {
+        let normalizedNotes = editMealNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        await viewModel.updateMealLog(
+            mealLogId: mealLog.id,
+            mealType: editMealType,
+            notes: normalizedNotes.isEmpty ? nil : normalizedNotes
+        )
+
+        editingMealLog = nil
     }
 }
 

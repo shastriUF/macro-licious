@@ -65,6 +65,59 @@ struct macroliciousTests {
         #expect(AuthCallbackParser.accessToken(from: missingTokenURL) == nil)
     }
 
+    @Test func decodesMealLogsResponse() async throws {
+        let json = """
+        {
+            "date": "2026-03-29",
+            "mealLogs": [
+                {
+                    "id": "meal_123",
+                    "userId": "user_123",
+                    "date": "2026-03-29",
+                    "mealType": "breakfast",
+                    "notes": "Morning log",
+                    "items": [
+                        {
+                            "id": "item_123",
+                            "mealLogId": "meal_123",
+                            "ingredientId": null,
+                            "ingredientName": "Oats",
+                            "quantityValue": 50,
+                            "quantityUnit": "g",
+                            "consumedGrams": 50,
+                            "nutrition": {
+                                "calories": 194.5,
+                                "carbs": 33.15,
+                                "protein": 8.45,
+                                "fat": 3.45
+                            },
+                            "createdAt": "2026-03-29T12:00:00Z",
+                            "updatedAt": "2026-03-29T12:00:00Z"
+                        }
+                    ],
+                    "createdAt": "2026-03-29T12:00:00Z",
+                    "updatedAt": "2026-03-29T12:00:00Z"
+                }
+            ],
+            "totals": {
+                "calories": 194.5,
+                "carbs": 33.15,
+                "protein": 8.45,
+                "fat": 3.45
+            }
+        }
+        """
+
+        let data = try #require(json.data(using: .utf8))
+        let decoded = try JSONDecoder().decode(MealLogsResponse.self, from: data)
+
+        #expect(decoded.date == "2026-03-29")
+        #expect(decoded.mealLogs.count == 1)
+        #expect(decoded.mealLogs.first?.mealType == .breakfast)
+        #expect(decoded.mealLogs.first?.items.first?.quantityUnit == .g)
+        #expect(decoded.totals.calories == 194.5)
+    }
+
     // MARK: - Unit Conversion Tests
 
     @Test func convertsGramsIdentity() {
