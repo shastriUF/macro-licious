@@ -95,9 +95,16 @@ final class AuthViewModel: ObservableObject {
             sessionStore.sessionToken = response.sessionToken
             currentUser = response.user
             syncMacroInput(with: response.user)
+
+            let ingredientResponse = try await apiClient.listIngredients(
+                sessionToken: response.sessionToken,
+                baseURL: normalizedBaseURL
+            )
+            ingredients = ingredientResponse.ingredients
+
             token = ""
             signInMode = .unknown
-            statusMessage = "Signed in as \(response.user.email). Token consumed; request a new one if needed."
+            statusMessage = "Signed in as \(response.user.email). Loaded \(ingredients.count) ingredients."
         }
     }
 

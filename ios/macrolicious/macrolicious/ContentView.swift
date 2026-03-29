@@ -158,19 +158,17 @@ struct ContentView: View {
                                         .font(.footnote)
                                         .foregroundStyle(.secondary)
                                 }
-
-                                HStack {
-                                    Button("Edit") {
-                                        beginEdit(ingredient)
-                                    }
-                                    .buttonStyle(.borderless)
-
-                                    Spacer()
-
-                                    Button("Archive", role: .destructive) {
-                                        archiveCandidate = ingredient
-                                    }
-                                    .buttonStyle(.borderless)
+                            }
+                            .contentShape(Rectangle())
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                Button("Edit") {
+                                    beginEdit(ingredient)
+                                }
+                                .tint(.blue)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button("Archive", role: .destructive) {
+                                    archiveCandidate = ingredient
                                 }
                             }
                             .padding(.vertical, 4)
