@@ -4,6 +4,7 @@ import { env } from './config/env';
 import { authRoute } from './routes/auth';
 import { healthRoute } from './routes/health';
 import { ingredientRoute } from './routes/ingredients';
+import { mealLogRoute } from './routes/meal-logs';
 import { profileRoute } from './routes/profile';
 
 export function buildApp(): FastifyInstance {
@@ -15,6 +16,7 @@ export function buildApp(): FastifyInstance {
   app.register(authRoute);
   app.register(profileRoute);
   app.register(ingredientRoute);
+  app.register(mealLogRoute);
 
   app.get('/', async () => {
     return {

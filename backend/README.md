@@ -50,3 +50,7 @@ See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for full Supabase Auth + DB setup.
 - `GET /ingredients/:ingredientId`
 - `PATCH /ingredients/:ingredientId`
 - `DELETE /ingredients/:ingredientId` (soft archive)
+- `POST /meal-logs`
+- `GET /meal-logs?date=YYYY-MM-DD`
+- `PATCH /meal-logs/:mealLogId`
+- `DELETE /meal-logs/:mealLogId`

@@ -47,3 +47,61 @@ export type CreateIngredientInput = {
 };
 
 export type UpdateIngredientInput = Partial<CreateIngredientInput>;
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export type QuantityUnit = 'g' | 'oz' | 'lb' | 'ml' | 'tsp' | 'tbsp' | 'cup';
+
+export type MealLogItemNutrition = {
+  calories: number;
+  carbs: number;
+  protein: number;
+  fat: number;
+};
+
+export type MealLogItem = {
+  id: string;
+  mealLogId: string;
+  ingredientId: string | null;
+  ingredientName: string;
+  quantityValue: number;
+  quantityUnit: QuantityUnit;
+  consumedGrams: number;
+  nutrition: MealLogItemNutrition;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MealLog = {
+  id: string;
+  userId: string;
+  date: string;
+  mealType: MealType;
+  notes: string | null;
+  items: MealLogItem[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateMealLogItemInput = {
+  ingredientId?: string;
+  ingredientName: string;
+  quantityValue: number;
+  quantityUnit: QuantityUnit;
+  consumedGrams: number;
+  nutrition: MealLogItemNutrition;
+};
+
+export type CreateMealLogInput = {
+  date: string;
+  mealType: MealType;
+  notes?: string;
+  items: CreateMealLogItemInput[];
+};
+
+export type UpdateMealLogInput = {
+  date?: string;
+  mealType?: MealType;
+  notes?: string | null;
+  items?: CreateMealLogItemInput[];
+};

@@ -1,6 +1,6 @@
 # Milestone 2 Plan — Logging Core
 
-Last updated: 2026-02-16
+Last updated: 2026-03-29
 
 ## 1) Milestone Objective
 Deliver the first complete daily logging workflow so calories/macros can be tracked end-to-end from app input to persisted meal logs.
@@ -10,6 +10,11 @@ By end of Milestone 2:
 - daily totals and target progress are computed and visible,
 - data is persisted in backend database and reloaded correctly,
 - core logging flows are covered by API and iOS tests.
+
+Current status snapshot:
+- ✅ Backend meal-log API, domain store, and integration tests implemented.
+- ✅ `meal_logs` + `meal_log_items` migration created and pushed to staging Supabase.
+- 🟡 iOS diary implementation not started yet (next critical path).
 
 ---
 
@@ -33,33 +38,33 @@ By end of Milestone 2:
 ## 3) Deliverables
 
 ## 3.1 Backend/API
-- `POST /meal-logs`
-- `GET /meal-logs?date=YYYY-MM-DD`
-- `PATCH /meal-logs/{id}`
-- `DELETE /meal-logs/{id}` (hard delete for now; archive optional)
-- Stable response payload containing immutable nutrition snapshot per item
+- [x] `POST /meal-logs`
+- [x] `GET /meal-logs?date=YYYY-MM-DD`
+- [x] `PATCH /meal-logs/{id}`
+- [x] `DELETE /meal-logs/{id}` (hard delete for now; archive optional)
+- [x] Stable response payload containing immutable nutrition snapshot per item
 
 ## 3.2 Data model
-- `meal_logs` (user/date/meal_type/notes/timestamps)
-- `meal_log_items` (meal_log_id + ingredient reference + quantity snapshot + nutrition snapshot)
+- [x] `meal_logs` (user/date/meal_type/notes/timestamps)
+- [x] `meal_log_items` (meal_log_id + ingredient reference + quantity snapshot + nutrition snapshot)
 
 ## 3.3 iOS
-- Diary screen grouped by meal type
-- Add/edit/delete item interactions
-- Totals and macro target progress UI
+- [ ] Diary screen grouped by meal type
+- [ ] Add/edit/delete item interactions
+- [ ] Totals and macro target progress UI
 
 ---
 
 ## 4) Testing & Quality Gates
 
 ## Backend
-- Unit tests for daily total aggregation and numeric rounding rules
-- Integration tests for add/edit/delete meal log APIs
-- Auth/ownership checks for meal log access
+- [x] Unit tests for daily total aggregation and numeric rounding rules
+- [x] Integration tests for add/edit/delete meal log APIs
+- [x] Auth/ownership checks for meal log access
 
 ## iOS
-- Unit tests for diary view model state transitions
-- UI tests for add/edit/delete meal log entry
+- [ ] Unit tests for diary view model state transitions
+- [ ] UI tests for add/edit/delete meal log entry
 
 Milestone exit criteria:
 - backend tests + lint + typecheck green
@@ -75,15 +80,21 @@ Milestone exit criteria:
 2. Add backend domain models + store layer
 3. Add API contracts + validation schemas
 
+Status: ✅ Completed
+
 ## Phase B — iOS diary
 1. Add diary models and API client methods
 2. Add diary UI sections and add/edit/delete controls
 3. Wire daily totals + target progress
 
+Status: ⏳ Not started
+
 ## Phase C — Hardening
 1. Add tests (backend + iOS)
 2. Run TestFlight smoke pass
 3. Fix regressions and finalize milestone
+
+Status: 🟡 In progress (backend tests complete; iOS test + smoke steps pending)
 
 ---
 
