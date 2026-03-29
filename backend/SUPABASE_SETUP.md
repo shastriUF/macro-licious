@@ -8,7 +8,7 @@ This guide configures Supabase for MacroLicious in a staged way:
 ## 1) Create Supabase project
 1. Go to https://supabase.com and create a new project.
 2. Save:
-   - `Project URL`
+  - `Project URL`
   - `Publishable key`
   - `Secret key`
 
