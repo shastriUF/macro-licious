@@ -45,6 +45,7 @@ Core outcomes:
 - Meal planner/calendar.
 - Grocery list generation from recipes.
 - Nutrition targets with adaptive coaching.
+- Siri + Apple Shortcuts integration via App Intents.
 - Apple Health write/read integration.
 - Import/export (CSV/JSON).
 
@@ -261,6 +262,13 @@ Status: 🟡 Not started (plan created in `MILESTONE_4_PLAN.md`)
 
 Status: 🟡 Not started (plan created in `MILESTONE_5_PLAN.md`)
 
+## Milestone 6 — Platform Integrations (Post-MVP)
+- Add Siri + Apple Shortcuts intents for quick capture/logging flows.
+- Add Apple Health integration once logging data model is stable in production.
+- Add integration tests and on-device validation for intent donation and invocation reliability.
+
+Status: ⏸️ Deferred until Milestones 1-5 are complete
+
 ---
 
 ## 12) Acceptance Criteria (MVP)
@@ -375,3 +383,4 @@ Status: 🟡 Not started (plan created in `MILESTONE_5_PLAN.md`)
 2. Milestone 3 recipe/cook-session/wet-weight math.
 3. Milestone 4 barcode integration + fallback + quality pass.
 4. Milestone 5 deploy/operate hardening and release cadence.
+5. Milestone 6 post-MVP platform integrations (Shortcuts/Siri + Apple Health).
