@@ -65,6 +65,7 @@ final class AuthViewModel: ObservableObject {
     @Published var mealLogs: [MealLog] = []
     @Published var dailyTotals = MealLogNutrition(calories: 0, carbs: 0, protein: 0, fat: 0)
     @Published var selectedMealType: MealType = .breakfast
+    @Published var mealQuickPresets: [MealQuickPreset] = []
     @Published var useIngredientForMealLog = true
     @Published var selectedMealIngredientId = ""
     @Published var mealNotesInput = ""
@@ -207,6 +208,7 @@ final class AuthViewModel: ObservableObject {
             )
             ingredients = ingredientResponse.ingredients
             syncMealIngredientSelection()
+            loadMealQuickPresetsIfNeeded()
 
             let mealLogResponse = try await apiClient.listMealLogs(
                 sessionToken: response.sessionToken,
@@ -357,9 +359,24 @@ final class AuthViewModel: ObservableObject {
             )
 
             applyDiaryResponse(response)
+            persistOrUpdateQuickPreset(from: createItem)
             resetMealLogInput()
             statusMessage = "Meal log entry created."
         }
+    }
+
+    func applyMealQuickPreset(_ preset: MealQuickPreset) {
+        guard ingredients.contains(where: { $0.id == preset.ingredientId }) else {
+            statusMessage = "Preset ingredient is not currently available."
+            return
+        }
+
+        selectedMealType = preset.mealType
+        useIngredientForMealLog = true
+        selectedMealIngredientId = preset.ingredientId
+        mealQuantityValueInput = formatPresetQuantity(preset.quantityValue)
+        mealQuantityUnit = preset.quantityUnit
+        statusMessage = "Applied preset \(preset.displayName)."
     }
 
     func updateMealLog(mealLogId: String, mealType: MealType, notes: String?) async {
@@ -519,6 +536,7 @@ final class AuthViewModel: ObservableObject {
             currentUser = nil
             ingredients = []
             mealLogs = []
+            mealQuickPresets = []
             dailyTotals = MealLogNutrition(calories: 0, carbs: 0, protein: 0, fat: 0)
             selectedMealIngredientId = ""
             token = ""
@@ -620,6 +638,82 @@ final class AuthViewModel: ObservableObject {
         mealFatInput = ""
     }
 
+    private func loadMealQuickPresetsIfNeeded() {
+        guard let userId = currentUser?.id else {
+            mealQuickPresets = []
+            return
+        }
+
+        let storedPresets = sessionStore.loadMealQuickPresets(for: userId)
+        mealQuickPresets = storedPresets.compactMap { preset in
+            guard
+                let mealType = MealType(rawValue: preset.mealTypeRawValue),
+                let quantityUnit = QuantityUnit(rawValue: preset.quantityUnitRawValue),
+                ingredients.contains(where: { $0.id == preset.ingredientId })
+            else {
+                return nil
+            }
+
+            return MealQuickPreset(
+                mealType: mealType,
+                ingredientId: preset.ingredientId,
+                ingredientName: preset.ingredientName,
+                quantityValue: preset.quantityValue,
+                quantityUnit: quantityUnit,
+                updatedAt: preset.updatedAt
+            )
+        }
+        .sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    private func persistOrUpdateQuickPreset(from item: CreateMealLogItemRequest) {
+        guard
+            useIngredientForMealLog,
+            let userId = currentUser?.id,
+            let ingredientId = item.ingredientId,
+            ingredients.contains(where: { $0.id == ingredientId })
+        else {
+            return
+        }
+
+        let preset = MealQuickPreset(
+            mealType: selectedMealType,
+            ingredientId: ingredientId,
+            ingredientName: item.ingredientName,
+            quantityValue: item.quantityValue,
+            quantityUnit: item.quantityUnit,
+            updatedAt: Date()
+        )
+
+        mealQuickPresets.removeAll {
+            $0.mealType == preset.mealType && $0.ingredientId == preset.ingredientId
+        }
+        mealQuickPresets.append(preset)
+        mealQuickPresets.sort { $0.updatedAt > $1.updatedAt }
+        if mealQuickPresets.count > 8 {
+            mealQuickPresets = Array(mealQuickPresets.prefix(8))
+        }
+
+        let stored = StoredMealQuickPreset(
+            userId: userId,
+            mealTypeRawValue: preset.mealType.rawValue,
+            ingredientId: preset.ingredientId,
+            ingredientName: preset.ingredientName,
+            quantityValue: preset.quantityValue,
+            quantityUnitRawValue: preset.quantityUnit.rawValue,
+            updatedAt: preset.updatedAt
+        )
+        sessionStore.upsertMealQuickPreset(stored)
+    }
+
+    private func formatPresetQuantity(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(Int(value))
+        }
+
+        return String(format: "%.2f", value)
+    }
+
     private func makeCreateMealLogItemRequest() -> CreateMealLogItemRequest? {
         if useIngredientForMealLog {
             guard
@@ -711,4 +805,31 @@ final class AuthViewModel: ObservableObject {
 struct MealLogComputationPreview {
     let consumedGrams: Double
     let nutrition: MealLogNutrition
+}
+
+struct MealQuickPreset: Equatable, Identifiable {
+    let mealType: MealType
+    let ingredientId: String
+    let ingredientName: String
+    let quantityValue: Double
+    let quantityUnit: QuantityUnit
+    let updatedAt: Date
+
+    var id: String {
+        "\(mealType.rawValue)-\(ingredientId)"
+    }
+
+    var displayName: String {
+        "\(ingredientName) • \(quantityValue.cleanString) \(quantityUnit.label)"
+    }
+}
+
+private extension Double {
+    var cleanString: String {
+        if rounded() == self {
+            return String(Int(self))
+        }
+
+        return String(format: "%.2f", self)
+    }
 }

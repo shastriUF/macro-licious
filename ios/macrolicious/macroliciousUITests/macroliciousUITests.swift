@@ -32,6 +32,33 @@ final class macroliciousUITests: XCTestCase {
     }
 
     @MainActor
+    func testDiaryShowsEntryModeSegments() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Diary"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Library"].exists)
+        XCTAssertTrue(app.buttons["Manual"].exists)
+    }
+
+    @MainActor
+    func testManualModeShowsManualFieldsAndDisablesAddWithoutValidInput() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let manualButton = app.buttons["Manual"]
+        XCTAssertTrue(manualButton.waitForExistence(timeout: 5))
+        manualButton.tap()
+
+        let ingredientNameField = app.textFields["Ingredient name"]
+        XCTAssertTrue(ingredientNameField.waitForExistence(timeout: 5))
+
+        let addButton = app.buttons["Add Meal Log Entry"]
+        XCTAssertTrue(addButton.exists)
+        XCTAssertFalse(addButton.isEnabled)
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
             // This measures how long it takes to launch your application.

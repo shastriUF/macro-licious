@@ -110,175 +110,23 @@ struct ContentView: View {
                 }
 
                 Section("Diary") {
-                    DatePicker("Date", selection: $viewModel.diaryDate, displayedComponents: .date)
-
-                    Button("Refresh Diary") {
-                        Task {
-                            await viewModel.refreshMealLogs()
-                        }
-                    }
-                    .disabled(viewModel.currentUser == nil || viewModel.isLoading)
-
-                    Picker("Meal Type", selection: $viewModel.selectedMealType) {
-                        ForEach(MealType.allCases) { mealType in
-                            Text(mealType.label).tag(mealType)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-
-                    Picker("Entry Mode", selection: mealLogEntryModeBinding) {
-                        ForEach(MealLogEntryMode.allCases) { mode in
-                            Text(mode.label).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-
-                    TextField("Notes (optional)", text: $viewModel.mealNotesInput)
-
-                    if viewModel.useIngredientForMealLog {
-                        if viewModel.ingredients.isEmpty {
-                            Text("No ingredients yet. Create one in Ingredients or switch to Manual Snapshot.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-
-                            Button("Switch to Manual Snapshot") {
-                                viewModel.useIngredientForMealLog = false
-                            }
-                        } else {
-                            Picker("Ingredient", selection: $viewModel.selectedMealIngredientId) {
-                                ForEach(viewModel.ingredients) { ingredient in
-                                    Text(ingredient.name).tag(ingredient.id)
-                                }
-                            }
-                            .pickerStyle(.menu)
-
-                            if let ingredient = viewModel.selectedMealIngredient {
-                                Text(
-                                    "Per 100g: kcal \(Int(ingredient.caloriesPer100g)) • C \(Int(ingredient.carbsPer100g)) • P \(Int(ingredient.proteinPer100g)) • F \(Int(ingredient.fatPer100g))"
-                                )
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-
-                                if let density = ingredient.densityGPerMl {
-                                    Text("Density: \(density, specifier: "%.2f") g/ml")
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    } else {
-                        TextField("Ingredient name", text: $viewModel.mealIngredientNameInput)
-                    }
-
-                    HStack {
-                        TextField("Quantity", text: $viewModel.mealQuantityValueInput)
-                            .keyboardType(.decimalPad)
-                        Picker("Unit", selection: $viewModel.mealQuantityUnit) {
-                            ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
-                                Text(unit.label).tag(unit)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                    }
-
-                    if viewModel.useIngredientForMealLog {
-                        if let preview = viewModel.mealLogPreview {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Computed Nutrition")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text(
-                                    "\(preview.consumedGrams, specifier: "%.1f")g • kcal \(Int(preview.nutrition.calories)) • C \(Int(preview.nutrition.carbs)) • P \(Int(preview.nutrition.protein)) • F \(Int(preview.nutrition.fat))"
-                                )
-                                .font(.footnote)
-                            }
-                        } else if !viewModel.mealQuantityValueInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            Text("Unable to compute nutrition. Use a mass unit or ensure the ingredient has density for volume units.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        TextField("Consumed grams", text: $viewModel.mealConsumedGramsInput)
-                            .keyboardType(.decimalPad)
-                        TextField("Calories", text: $viewModel.mealCaloriesInput)
-                            .keyboardType(.decimalPad)
-                        TextField("Carbs", text: $viewModel.mealCarbsInput)
-                            .keyboardType(.decimalPad)
-                        TextField("Protein", text: $viewModel.mealProteinInput)
-                            .keyboardType(.decimalPad)
-                        TextField("Fat", text: $viewModel.mealFatInput)
-                            .keyboardType(.decimalPad)
-                    }
-
-                    if hasMealLogDraftInput, let validationMessage = viewModel.mealLogValidationMessage {
-                        Text(validationMessage)
-                            .font(.footnote)
-                            .foregroundStyle(.orange)
-                    }
-
-                    Button {
-                        Task {
-                            await viewModel.createMealLog()
-                        }
-                    } label: {
-                        Label("Add Meal Log Entry", systemImage: "plus.circle.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.isLoading || !viewModel.canCreateMealLog)
-
-                    Text(
-                        "Totals: kcal \(Int(viewModel.dailyTotals.calories)) • C \(Int(viewModel.dailyTotals.carbs)) • P \(Int(viewModel.dailyTotals.protein)) • F \(Int(viewModel.dailyTotals.fat))"
+                    DiaryComposerView(
+                        viewModel: viewModel,
+                        mealLogEntryModeBinding: mealLogEntryModeBinding,
+                        hasMealLogDraftInput: hasMealLogDraftInput
                     )
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
 
-                    if viewModel.mealLogs.isEmpty {
-                        Text("No meal logs for selected date")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.mealLogs) { mealLog in
-                            VStack(alignment: .leading, spacing: 6) {
-                                HStack {
-                                    Text(mealLog.mealType.label)
-                                        .font(.headline)
-                                    Spacer()
-                                    Text(mealLog.date)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
+                    DailyTotalsView(totals: viewModel.dailyTotals)
 
-                                if let notes = mealLog.notes, !notes.isEmpty {
-                                    Text(notes)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
-
-                                ForEach(mealLog.items) { item in
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(item.ingredientName)
-                                        Text(
-                                            "\(item.quantityValue, specifier: "%.2f") \(item.quantityUnit.label) • \(item.consumedGrams, specifier: "%.1f")g • kcal \(Int(item.nutrition.calories))"
-                                        )
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                Button("Edit") {
-                                    beginMealLogEdit(mealLog)
-                                }
-                                .tint(.blue)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button("Delete", role: .destructive) {
-                                    deleteMealLogCandidate = mealLog
-                                }
-                            }
-                            .padding(.vertical, 4)
+                    MealLogListView(
+                        mealLogs: viewModel.mealLogs,
+                        onEdit: { mealLog in
+                            beginMealLogEdit(mealLog)
+                        },
+                        onDelete: { mealLog in
+                            deleteMealLogCandidate = mealLog
                         }
-                    }
+                    )
                 }
 
                 Section("Ingredients") {
@@ -611,6 +459,248 @@ private enum MealLogEntryMode: String, CaseIterable, Identifiable {
             return "Library"
         case .manualSnapshot:
             return "Manual"
+        }
+    }
+}
+
+private struct DiaryComposerView: View {
+    @ObservedObject var viewModel: AuthViewModel
+    let mealLogEntryModeBinding: Binding<MealLogEntryMode>
+    let hasMealLogDraftInput: Bool
+
+    var body: some View {
+        DatePicker("Date", selection: $viewModel.diaryDate, displayedComponents: .date)
+
+        Button("Refresh Diary") {
+            Task {
+                await viewModel.refreshMealLogs()
+            }
+        }
+        .disabled(viewModel.currentUser == nil || viewModel.isLoading)
+
+        if !viewModel.mealQuickPresets.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Quick Add")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(viewModel.mealQuickPresets) { preset in
+                            Button {
+                                viewModel.applyMealQuickPreset(preset)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(preset.mealType.label)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                    Text(preset.displayName)
+                                        .font(.footnote)
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+
+        Picker("Meal Type", selection: $viewModel.selectedMealType) {
+            ForEach(MealType.allCases) { mealType in
+                Text(mealType.label).tag(mealType)
+            }
+        }
+        .pickerStyle(.segmented)
+
+        Picker("Entry Mode", selection: mealLogEntryModeBinding) {
+            ForEach(MealLogEntryMode.allCases) { mode in
+                Text(mode.label).tag(mode)
+            }
+        }
+        .pickerStyle(.segmented)
+
+        TextField("Notes (optional)", text: $viewModel.mealNotesInput)
+
+        if viewModel.useIngredientForMealLog {
+            ingredientEntryView
+        } else {
+            manualEntryView
+        }
+
+        if hasMealLogDraftInput, let validationMessage = viewModel.mealLogValidationMessage {
+            Text(validationMessage)
+                .font(.footnote)
+                .foregroundStyle(.orange)
+        }
+
+        Button {
+            Task {
+                await viewModel.createMealLog()
+            }
+        } label: {
+            Label("Add Meal Log Entry", systemImage: "plus.circle.fill")
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(viewModel.isLoading || !viewModel.canCreateMealLog)
+    }
+
+    @ViewBuilder
+    private var ingredientEntryView: some View {
+        if viewModel.ingredients.isEmpty {
+            Text("No ingredients yet. Create one in Ingredients or switch to Manual Snapshot.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            Button("Switch to Manual Snapshot") {
+                viewModel.useIngredientForMealLog = false
+            }
+        } else {
+            Picker("Ingredient", selection: $viewModel.selectedMealIngredientId) {
+                ForEach(viewModel.ingredients) { ingredient in
+                    Text(ingredient.name).tag(ingredient.id)
+                }
+            }
+            .pickerStyle(.menu)
+
+            if let ingredient = viewModel.selectedMealIngredient {
+                Text(
+                    "Per 100g: kcal \(Int(ingredient.caloriesPer100g)) • C \(Int(ingredient.carbsPer100g)) • P \(Int(ingredient.proteinPer100g)) • F \(Int(ingredient.fatPer100g))"
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+                if let density = ingredient.densityGPerMl {
+                    Text("Density: \(density, specifier: "%.2f") g/ml")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            HStack {
+                TextField("Quantity", text: $viewModel.mealQuantityValueInput)
+                    .keyboardType(.decimalPad)
+                Picker("Unit", selection: $viewModel.mealQuantityUnit) {
+                    ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
+                        Text(unit.label).tag(unit)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            if let preview = viewModel.mealLogPreview {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Computed Nutrition")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(
+                        "\(preview.consumedGrams, specifier: "%.1f")g • kcal \(Int(preview.nutrition.calories)) • C \(Int(preview.nutrition.carbs)) • P \(Int(preview.nutrition.protein)) • F \(Int(preview.nutrition.fat))"
+                    )
+                    .font(.footnote)
+                }
+            } else if !viewModel.mealQuantityValueInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text("Unable to compute nutrition. Use a mass unit or ensure the ingredient has density for volume units.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var manualEntryView: some View {
+        TextField("Ingredient name", text: $viewModel.mealIngredientNameInput)
+
+        HStack {
+            TextField("Quantity", text: $viewModel.mealQuantityValueInput)
+                .keyboardType(.decimalPad)
+            Picker("Unit", selection: $viewModel.mealQuantityUnit) {
+                ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
+                    Text(unit.label).tag(unit)
+                }
+            }
+            .pickerStyle(.menu)
+        }
+
+        TextField("Consumed grams", text: $viewModel.mealConsumedGramsInput)
+            .keyboardType(.decimalPad)
+        TextField("Calories", text: $viewModel.mealCaloriesInput)
+            .keyboardType(.decimalPad)
+        TextField("Carbs", text: $viewModel.mealCarbsInput)
+            .keyboardType(.decimalPad)
+        TextField("Protein", text: $viewModel.mealProteinInput)
+            .keyboardType(.decimalPad)
+        TextField("Fat", text: $viewModel.mealFatInput)
+            .keyboardType(.decimalPad)
+    }
+}
+
+private struct DailyTotalsView: View {
+    let totals: MealLogNutrition
+
+    var body: some View {
+        Text(
+            "Totals: kcal \(Int(totals.calories)) • C \(Int(totals.carbs)) • P \(Int(totals.protein)) • F \(Int(totals.fat))"
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+    }
+}
+
+private struct MealLogListView: View {
+    let mealLogs: [MealLog]
+    let onEdit: (MealLog) -> Void
+    let onDelete: (MealLog) -> Void
+
+    var body: some View {
+        if mealLogs.isEmpty {
+            Text("No meal logs for selected date")
+                .foregroundStyle(.secondary)
+        } else {
+            ForEach(mealLogs) { mealLog in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(mealLog.mealType.label)
+                            .font(.headline)
+                        Spacer()
+                        Text(mealLog.date)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let notes = mealLog.notes, !notes.isEmpty {
+                        Text(notes)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    ForEach(mealLog.items) { item in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.ingredientName)
+                            Text(
+                                "\(item.quantityValue, specifier: "%.2f") \(item.quantityUnit.label) • \(item.consumedGrams, specifier: "%.1f")g • kcal \(Int(item.nutrition.calories))"
+                            )
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .contentShape(Rectangle())
+                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                    Button("Edit") {
+                        onEdit(mealLog)
+                    }
+                    .tint(.blue)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button("Delete", role: .destructive) {
+                        onDelete(mealLog)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
         }
     }
 }

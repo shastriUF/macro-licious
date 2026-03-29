@@ -5,6 +5,7 @@ final class SessionStore {
     private enum Keys {
         static let sessionToken = "macrolicious.sessionToken"
         static let baseURL = "macrolicious.baseURL"
+        static let mealQuickPresets = "macrolicious.mealQuickPresets"
     }
 
     private let defaults = UserDefaults.standard
@@ -28,6 +29,53 @@ final class SessionStore {
 
     func clearSession() {
         deleteTokenFromKeychain()
+    }
+
+    func loadMealQuickPresets(for userId: String) -> [StoredMealQuickPreset] {
+        readMealQuickPresets()
+            .filter { $0.userId == userId }
+            .sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    func upsertMealQuickPreset(_ preset: StoredMealQuickPreset, maxPerUser: Int = 24) {
+        var allPresets = readMealQuickPresets()
+
+        allPresets.removeAll {
+            $0.userId == preset.userId &&
+            $0.mealTypeRawValue == preset.mealTypeRawValue &&
+            $0.ingredientId == preset.ingredientId
+        }
+
+        allPresets.append(preset)
+
+        let otherUsers = allPresets.filter { $0.userId != preset.userId }
+        let currentUserPresets = allPresets
+            .filter { $0.userId == preset.userId }
+            .sorted { $0.updatedAt > $1.updatedAt }
+
+        let trimmedCurrentUserPresets = Array(currentUserPresets.prefix(maxPerUser))
+        writeMealQuickPresets(otherUsers + trimmedCurrentUserPresets)
+    }
+
+    private func readMealQuickPresets() -> [StoredMealQuickPreset] {
+        guard let data = defaults.data(forKey: Keys.mealQuickPresets) else {
+            return []
+        }
+
+        do {
+            return try JSONDecoder().decode([StoredMealQuickPreset].self, from: data)
+        } catch {
+            return []
+        }
+    }
+
+    private func writeMealQuickPresets(_ presets: [StoredMealQuickPreset]) {
+        do {
+            let data = try JSONEncoder().encode(presets)
+            defaults.set(data, forKey: Keys.mealQuickPresets)
+        } catch {
+            defaults.removeObject(forKey: Keys.mealQuickPresets)
+        }
     }
 
     private func saveTokenToKeychain(_ token: String) {
@@ -86,4 +134,14 @@ final class SessionStore {
 
         SecItemDelete(query as CFDictionary)
     }
+}
+
+struct StoredMealQuickPreset: Codable, Equatable {
+    let userId: String
+    let mealTypeRawValue: String
+    let ingredientId: String
+    let ingredientName: String
+    let quantityValue: Double
+    let quantityUnitRawValue: String
+    let updatedAt: Date
 }
