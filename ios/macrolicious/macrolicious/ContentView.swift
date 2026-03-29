@@ -116,21 +116,33 @@ struct ContentView: View {
                             await viewModel.refreshMealLogs()
                         }
                     }
+                    .disabled(viewModel.currentUser == nil || viewModel.isLoading)
 
                     Picker("Meal Type", selection: $viewModel.selectedMealType) {
                         ForEach(MealType.allCases) { mealType in
                             Text(mealType.label).tag(mealType)
                         }
                     }
+                    .pickerStyle(.segmented)
+
+                    Picker("Entry Mode", selection: mealLogEntryModeBinding) {
+                        ForEach(MealLogEntryMode.allCases) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
 
                     TextField("Notes (optional)", text: $viewModel.mealNotesInput)
-                    Toggle("Use Ingredient Library", isOn: $viewModel.useIngredientForMealLog)
 
                     if viewModel.useIngredientForMealLog {
                         if viewModel.ingredients.isEmpty {
-                            Text("No ingredients yet. Create one below or switch to manual entry.")
+                            Text("No ingredients yet. Create one in Ingredients or switch to Manual Snapshot.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
+
+                            Button("Switch to Manual Snapshot") {
+                                viewModel.useIngredientForMealLog = false
+                            }
                         } else {
                             Picker("Ingredient", selection: $viewModel.selectedMealIngredientId) {
                                 ForEach(viewModel.ingredients) { ingredient in
@@ -170,11 +182,15 @@ struct ContentView: View {
 
                     if viewModel.useIngredientForMealLog {
                         if let preview = viewModel.mealLogPreview {
-                            Text(
-                                "Computed: \(preview.consumedGrams, specifier: "%.1f")g • kcal \(Int(preview.nutrition.calories)) • C \(Int(preview.nutrition.carbs)) • P \(Int(preview.nutrition.protein)) • F \(Int(preview.nutrition.fat))"
-                            )
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Computed Nutrition")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(
+                                    "\(preview.consumedGrams, specifier: "%.1f")g • kcal \(Int(preview.nutrition.calories)) • C \(Int(preview.nutrition.carbs)) • P \(Int(preview.nutrition.protein)) • F \(Int(preview.nutrition.fat))"
+                                )
+                                .font(.footnote)
+                            }
                         } else if !viewModel.mealQuantityValueInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Text("Unable to compute nutrition. Use a mass unit or ensure the ingredient has density for volume units.")
                                 .font(.footnote)
@@ -193,11 +209,21 @@ struct ContentView: View {
                             .keyboardType(.decimalPad)
                     }
 
-                    Button("Add Meal Log Entry") {
+                    if hasMealLogDraftInput, let validationMessage = viewModel.mealLogValidationMessage {
+                        Text(validationMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
+
+                    Button {
                         Task {
                             await viewModel.createMealLog()
                         }
+                    } label: {
+                        Label("Add Meal Log Entry", systemImage: "plus.circle.fill")
                     }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(viewModel.isLoading || !viewModel.canCreateMealLog)
 
                     Text(
                         "Totals: kcal \(Int(viewModel.dailyTotals.calories)) • C \(Int(viewModel.dailyTotals.carbs)) • P \(Int(viewModel.dailyTotals.protein)) • F \(Int(viewModel.dailyTotals.fat))"
@@ -338,6 +364,10 @@ struct ContentView: View {
             }
             .navigationTitle("MacroLicious")
             .onChange(of: viewModel.diaryDate) { _, _ in
+                guard viewModel.currentUser != nil else {
+                    return
+                }
+
                 Task {
                     await viewModel.refreshMealLogs()
                 }
@@ -531,6 +561,50 @@ struct ContentView: View {
         )
 
         editingMealLog = nil
+    }
+
+    private var mealLogEntryModeBinding: Binding<MealLogEntryMode> {
+        Binding(
+            get: {
+                viewModel.useIngredientForMealLog ? .ingredientLibrary : .manualSnapshot
+            },
+            set: { newMode in
+                viewModel.useIngredientForMealLog = newMode == .ingredientLibrary
+            }
+        )
+    }
+
+    private var hasMealLogDraftInput: Bool {
+        let quantityText = viewModel.mealQuantityValueInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !quantityText.isEmpty {
+            return true
+        }
+
+        if !viewModel.mealNotesInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return true
+        }
+
+        if viewModel.useIngredientForMealLog {
+            return viewModel.selectedMealIngredient != nil
+        }
+
+        return !viewModel.mealIngredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
+private enum MealLogEntryMode: String, CaseIterable, Identifiable {
+    case ingredientLibrary
+    case manualSnapshot
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .ingredientLibrary:
+            return "Library"
+        case .manualSnapshot:
+            return "Manual"
+        }
     }
 }
 

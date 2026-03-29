@@ -82,6 +82,7 @@ final class AuthViewModel: ObservableObject {
 
     private let apiClient: APIClient
     private let sessionStore: SessionStore
+    private var inFlightOperations = 0
 
     var selectedMealIngredient: Ingredient? {
         ingredients.first(where: { $0.id == selectedMealIngredientId })
@@ -121,6 +122,55 @@ final class AuthViewModel: ObservableObject {
                 fat: nutrition.fat
             )
         )
+    }
+
+    var mealLogValidationMessage: String? {
+        if useIngredientForMealLog {
+            guard selectedMealIngredient != nil else {
+                return "Select an ingredient to add this meal entry."
+            }
+
+            guard let quantity = Double(mealQuantityValueInput), quantity > 0 else {
+                return "Enter a quantity greater than 0."
+            }
+
+            guard mealLogPreview != nil else {
+                return "Use a mass unit or provide ingredient density for volume units."
+            }
+
+            return nil
+        }
+
+        guard !mealIngredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return "Enter an ingredient name."
+        }
+
+        guard let quantity = Double(mealQuantityValueInput), quantity > 0 else {
+            return "Enter a quantity greater than 0."
+        }
+
+        guard let consumedGrams = Double(mealConsumedGramsInput), consumedGrams > 0 else {
+            return "Enter consumed grams greater than 0."
+        }
+
+        guard
+            let calories = Double(mealCaloriesInput),
+            let carbs = Double(mealCarbsInput),
+            let protein = Double(mealProteinInput),
+            let fat = Double(mealFatInput),
+            calories >= 0,
+            carbs >= 0,
+            protein >= 0,
+            fat >= 0
+        else {
+            return "Enter valid non-negative macro values."
+        }
+
+        return nil
+    }
+
+    var canCreateMealLog: Bool {
+        mealLogValidationMessage == nil
     }
 
     init(apiClient: APIClient = APIClient(), sessionStore: SessionStore = SessionStore()) {
@@ -279,65 +329,9 @@ final class AuthViewModel: ObservableObject {
             return
         }
 
-        let createItem: CreateMealLogItemRequest
-
-        if useIngredientForMealLog {
-            guard let ingredient = selectedMealIngredient else {
-                statusMessage = "Select an ingredient before adding a meal log."
-                return
-            }
-
-            guard let quantityValue = Double(mealQuantityValueInput), quantityValue > 0 else {
-                statusMessage = "Enter a valid quantity before adding a meal log."
-                return
-            }
-
-            guard let preview = mealLogPreview else {
-                statusMessage = "Cannot compute nutrition for the selected unit. Use a mass unit or provide ingredient density."
-                return
-            }
-
-            createItem = CreateMealLogItemRequest(
-                ingredientId: ingredient.id,
-                ingredientName: ingredient.name,
-                quantityValue: quantityValue,
-                quantityUnit: mealQuantityUnit,
-                consumedGrams: preview.consumedGrams,
-                nutrition: preview.nutrition
-            )
-        } else {
-            guard
-                !mealIngredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-                let quantityValue = Double(mealQuantityValueInput),
-                let consumedGrams = Double(mealConsumedGramsInput),
-                let calories = Double(mealCaloriesInput),
-                let carbs = Double(mealCarbsInput),
-                let protein = Double(mealProteinInput),
-                let fat = Double(mealFatInput),
-                quantityValue > 0,
-                consumedGrams > 0,
-                calories >= 0,
-                carbs >= 0,
-                protein >= 0,
-                fat >= 0
-            else {
-                statusMessage = "Enter valid manual meal-log values before adding an entry."
-                return
-            }
-
-            createItem = CreateMealLogItemRequest(
-                ingredientId: nil,
-                ingredientName: mealIngredientNameInput,
-                quantityValue: quantityValue,
-                quantityUnit: mealQuantityUnit,
-                consumedGrams: consumedGrams,
-                nutrition: MealLogNutrition(
-                    calories: calories,
-                    carbs: carbs,
-                    protein: protein,
-                    fat: fat
-                )
-            )
+        guard let createItem = makeCreateMealLogItemRequest() else {
+            statusMessage = mealLogValidationMessage ?? "Enter valid meal-log values before adding an entry."
+            return
         }
 
         await perform {
@@ -584,8 +578,12 @@ final class AuthViewModel: ObservableObject {
     }()
 
     private func perform(_ operation: () async throws -> Void) async {
-        isLoading = true
-        defer { isLoading = false }
+        inFlightOperations += 1
+        isLoading = inFlightOperations > 0
+        defer {
+            inFlightOperations = max(0, inFlightOperations - 1)
+            isLoading = inFlightOperations > 0
+        }
 
         do {
             try await operation()
@@ -620,6 +618,60 @@ final class AuthViewModel: ObservableObject {
         mealCarbsInput = ""
         mealProteinInput = ""
         mealFatInput = ""
+    }
+
+    private func makeCreateMealLogItemRequest() -> CreateMealLogItemRequest? {
+        if useIngredientForMealLog {
+            guard
+                let ingredient = selectedMealIngredient,
+                let quantityValue = Double(mealQuantityValueInput),
+                quantityValue > 0,
+                let preview = mealLogPreview
+            else {
+                return nil
+            }
+
+            return CreateMealLogItemRequest(
+                ingredientId: ingredient.id,
+                ingredientName: ingredient.name,
+                quantityValue: quantityValue,
+                quantityUnit: mealQuantityUnit,
+                consumedGrams: preview.consumedGrams,
+                nutrition: preview.nutrition
+            )
+        }
+
+        guard
+            !mealIngredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            let quantityValue = Double(mealQuantityValueInput),
+            let consumedGrams = Double(mealConsumedGramsInput),
+            let calories = Double(mealCaloriesInput),
+            let carbs = Double(mealCarbsInput),
+            let protein = Double(mealProteinInput),
+            let fat = Double(mealFatInput),
+            quantityValue > 0,
+            consumedGrams > 0,
+            calories >= 0,
+            carbs >= 0,
+            protein >= 0,
+            fat >= 0
+        else {
+            return nil
+        }
+
+        return CreateMealLogItemRequest(
+            ingredientId: nil,
+            ingredientName: mealIngredientNameInput,
+            quantityValue: quantityValue,
+            quantityUnit: mealQuantityUnit,
+            consumedGrams: consumedGrams,
+            nutrition: MealLogNutrition(
+                calories: calories,
+                carbs: carbs,
+                protein: protein,
+                fat: fat
+            )
+        )
     }
 
     private func syncMealIngredientSelection() {
