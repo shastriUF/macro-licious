@@ -340,7 +340,7 @@ Status: ⏸️ Deferred until Milestones 1-5 are complete
 - [x] Build daily diary screens (breakfast/lunch/dinner/snacks).
 - [x] Adopt tabbed iOS IA (Sign In / Meals / Ingredients).
 - [ ] Add quick-log from ingredient and recipe.
-- [ ] Show per-meal and daily totals versus macro targets.
+- [x] Show per-meal and daily totals versus macro targets.
 - [ ] Store immutable nutrition snapshot on each logged item.
 
 ### UI Iteration (Meals UX)

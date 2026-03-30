@@ -193,6 +193,17 @@ struct ContentView: View {
 
                     DailyTotalsView(totals: viewModel.dailyTotals)
 
+                    if let user = viewModel.currentUser {
+                        MacroTargetProgressView(
+                            totals: viewModel.dailyTotals,
+                            targets: user.macroTargets
+                        )
+                    } else {
+                        Text("Sign in to view macro target progress.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
                     MealLogListView(
                         mealLogs: viewModel.mealLogs,
                         onEdit: { mealLog in
@@ -706,6 +717,61 @@ private struct DailyTotalsView: View {
         )
         .font(.footnote)
         .foregroundStyle(.secondary)
+    }
+}
+
+private struct MacroTargetProgressView: View {
+    let totals: MealLogNutrition
+    let targets: MacroTargets
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Target Progress")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            MacroProgressRow(label: "Calories", consumed: totals.calories, target: targets.calories, tint: .orange)
+            MacroProgressRow(label: "Carbs", consumed: totals.carbs, target: targets.carbs, tint: .blue)
+            MacroProgressRow(label: "Protein", consumed: totals.protein, target: targets.protein, tint: .green)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct MacroProgressRow: View {
+    let label: String
+    let consumed: Double
+    let target: Double
+    let tint: Color
+
+    private var ratio: Double {
+        guard target > 0 else {
+            return 0
+        }
+
+        return consumed / target
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.footnote)
+                Spacer()
+                Text("\(Int(consumed)) / \(Int(target))")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            ProgressView(value: min(ratio, 1.0))
+                .tint(tint)
+
+            if ratio > 1 {
+                Text("Over by \(Int(consumed - target))")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+        }
     }
 }
 
