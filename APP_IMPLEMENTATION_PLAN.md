@@ -1,6 +1,6 @@
 # Calorie & Macro Tracker — Product + Implementation Plan
 
-_Last updated: 2026-02-16_
+_Last updated: 2026-03-29_
 
 ## 1) Product Goal
 Build a lightweight, low-friction calorie and macro tracker focused on home cooking and ingredient-level precision, without ad-heavy UX.
@@ -147,6 +147,7 @@ Behavior:
 - Breakfast/lunch/dinner/snacks sections.
 - Add ingredient/recipe quickly.
 - Show per-meal + daily totals against user macro targets.
+- Use tabbed top-level navigation for iOS: Sign In, Meals, Ingredients.
 
 ---
 
@@ -234,7 +235,7 @@ Status: ✅ Mostly complete (core foundation delivered; release hardening remain
 - Testing: add calculation regression tests and iOS UI tests for add/edit/delete meal log flows.
 - Release strategy: push milestone-complete TestFlight build and run end-to-end diary smoke test on device.
 
-Status: 🟡 Not started (plan created in `MILESTONE_2_PLAN.md`)
+Status: 🟡 In progress (core diary + tabbed navigation shipped; remaining target-progress UI and final hardening tracked in `MILESTONE_2_PLAN.md`)
 
 ## Milestone 3 — Recipes + Wet Weight
 - Recipe creation/editing.
@@ -335,7 +336,8 @@ Status: ⏸️ Deferred until Milestones 1-5 are complete
 - [x] Add manual custom ingredient creation flow optimized for raw produce.
 
 ### Meal Logging
-- [ ] Build daily diary screens (breakfast/lunch/dinner/snacks).
+- [x] Build daily diary screens (breakfast/lunch/dinner/snacks).
+- [x] Adopt tabbed iOS IA (Sign In / Meals / Ingredients).
 - [ ] Add quick-log from ingredient and recipe.
 - [ ] Show per-meal and daily totals versus macro targets.
 - [ ] Store immutable nutrition snapshot on each logged item.

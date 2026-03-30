@@ -15,6 +15,7 @@ Current status snapshot:
 - ✅ Backend meal-log API, domain store, and integration tests implemented.
 - ✅ `meal_logs` + `meal_log_items` migration created and pushed to staging Supabase.
 - ✅ iOS diary flow implemented (ingredient-library + manual snapshot logging, add/edit/delete, daily totals).
+- ✅ iOS tabbed IA implemented (Sign In / Meals / Ingredients).
 - ✅ iOS diary UX/stability pass completed (segmented entry modes, computed validation feedback, safer loading behavior).
 - 🟡 Remaining: macro target progress visualization in diary + dedicated diary UI tests + device smoke pass.
 
@@ -53,6 +54,7 @@ Current status snapshot:
 ## 3.3 iOS
 - [x] Diary screen with meal-type selector and date-based log listing
 - [x] Add/edit/delete item interactions
+- [x] Tab-based top-level navigation for auth, meals, and ingredients
 - [ ] Totals and macro target progress UI (totals complete, target progress pending)
 
 ---

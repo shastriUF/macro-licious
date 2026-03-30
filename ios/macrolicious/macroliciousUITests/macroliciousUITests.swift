@@ -36,7 +36,8 @@ final class macroliciousUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["Diary"].waitForExistence(timeout: 5))
+        openMealsTab(in: app)
+
         XCTAssertTrue(app.buttons["Library"].exists)
         XCTAssertTrue(app.buttons["Manual"].exists)
     }
@@ -45,6 +46,8 @@ final class macroliciousUITests: XCTestCase {
     func testManualModeShowsManualFieldsAndDisablesAddWithoutValidInput() throws {
         let app = XCUIApplication()
         app.launch()
+
+        openMealsTab(in: app)
 
         let manualButton = app.buttons["Manual"]
         XCTAssertTrue(manualButton.waitForExistence(timeout: 5))
@@ -66,5 +69,11 @@ final class macroliciousUITests: XCTestCase {
                 XCUIApplication().launch()
             }
         }
+    }
+
+    private func openMealsTab(in app: XCUIApplication) {
+        let mealsTab = app.tabBars.buttons["Meals"]
+        XCTAssertTrue(mealsTab.waitForExistence(timeout: 5))
+        mealsTab.tap()
     }
 }
