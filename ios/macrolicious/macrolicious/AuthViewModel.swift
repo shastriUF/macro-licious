@@ -81,8 +81,8 @@ final class AuthViewModel: ObservableObject {
     @Published var isLoading = false
     @Published private(set) var signInMode: SignInMode = .unknown
 
-    private let apiClient: APIClient
-    private let sessionStore: SessionStore
+    private let apiClient: APIClientProtocol
+    private let sessionStore: SessionStoreProtocol
     private var inFlightOperations = 0
 
     var selectedMealIngredient: Ingredient? {
@@ -174,7 +174,7 @@ final class AuthViewModel: ObservableObject {
         mealLogValidationMessage == nil
     }
 
-    init(apiClient: APIClient = APIClient(), sessionStore: SessionStore = SessionStore()) {
+    init(apiClient: APIClientProtocol = APIClient(), sessionStore: SessionStoreProtocol = SessionStore()) {
         self.apiClient = apiClient
         self.sessionStore = sessionStore
         self.baseURL = sessionStore.baseURL
@@ -703,7 +703,7 @@ final class AuthViewModel: ObservableObject {
             quantityUnitRawValue: preset.quantityUnit.rawValue,
             updatedAt: preset.updatedAt
         )
-        sessionStore.upsertMealQuickPreset(stored)
+        sessionStore.upsertMealQuickPreset(stored, maxPerUser: 24)
     }
 
     private func formatPresetQuantity(_ value: Double) -> String {

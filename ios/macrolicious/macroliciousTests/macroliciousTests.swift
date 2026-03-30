@@ -184,4 +184,274 @@ struct macroliciousTests {
         #expect(QuantityUnit.cup.isMass == false)
     }
 
+    @MainActor
+    @Test func quickPresetsLoadAfterVerifyAndFilterUnavailableIngredients() async throws {
+        let userId = "user_\(UUID().uuidString)"
+        let availableIngredient = testIngredient(id: "ingredient_available")
+
+        let sessionStore = MockSessionStore()
+        sessionStore.storedPresets = [
+            StoredMealQuickPreset(
+                userId: userId,
+                mealTypeRawValue: MealType.breakfast.rawValue,
+                ingredientId: availableIngredient.id,
+                ingredientName: availableIngredient.name,
+                quantityValue: 80,
+                quantityUnitRawValue: QuantityUnit.g.rawValue,
+                updatedAt: Date()
+            ),
+            StoredMealQuickPreset(
+                userId: userId,
+                mealTypeRawValue: MealType.lunch.rawValue,
+                ingredientId: "ingredient_missing",
+                ingredientName: "Missing Ingredient",
+                quantityValue: 1,
+                quantityUnitRawValue: QuantityUnit.cup.rawValue,
+                updatedAt: Date().addingTimeInterval(-60)
+            )
+        ]
+
+        let apiClient = MockAPIClient()
+        apiClient.verifyResponse = MagicLinkVerifyResponse(
+            sessionToken: "session_test",
+            user: testUserProfile(id: userId)
+        )
+        apiClient.ingredientsResponse = IngredientsResponse(ingredients: [availableIngredient])
+        apiClient.mealLogsResponse = emptyMealLogsResponse()
+
+        let viewModel = AuthViewModel(apiClient: apiClient, sessionStore: sessionStore)
+        viewModel.token = "token_from_magic_link"
+
+        await viewModel.verifyMagicLink()
+
+        #expect(viewModel.mealQuickPresets.count == 1)
+        #expect(viewModel.mealQuickPresets.first?.ingredientId == availableIngredient.id)
+    }
+
+    @MainActor
+    @Test func applyQuickPresetPopulatesMealComposerFields() {
+        let apiClient = MockAPIClient()
+        let sessionStore = MockSessionStore()
+        let ingredient = testIngredient(id: "ingredient_42", name: "Greek Yogurt")
+        let viewModel = AuthViewModel(apiClient: apiClient, sessionStore: sessionStore)
+        viewModel.ingredients = [ingredient]
+
+        let preset = MealQuickPreset(
+            mealType: .snack,
+            ingredientId: ingredient.id,
+            ingredientName: ingredient.name,
+            quantityValue: 150,
+            quantityUnit: .g,
+            updatedAt: Date()
+        )
+
+        viewModel.applyMealQuickPreset(preset)
+
+        #expect(viewModel.selectedMealType == .snack)
+        #expect(viewModel.useIngredientForMealLog == true)
+        #expect(viewModel.selectedMealIngredientId == ingredient.id)
+        #expect(viewModel.mealQuantityValueInput == "150")
+        #expect(viewModel.mealQuantityUnit == .g)
+    }
+
+    @MainActor
+    @Test func createMealLogPersistsQuickPresetInIngredientMode() async {
+        let userId = "user_\(UUID().uuidString)"
+        let ingredient = testIngredient(id: "ingredient_abc", name: "Oats")
+        let apiClient = MockAPIClient()
+        let sessionStore = MockSessionStore()
+        sessionStore.sessionToken = "session_token_123"
+
+        apiClient.mealLogsResponse = emptyMealLogsResponse()
+
+        let viewModel = AuthViewModel(apiClient: apiClient, sessionStore: sessionStore)
+        viewModel.currentUser = testUserProfile(id: userId)
+        viewModel.ingredients = [ingredient]
+        viewModel.selectedMealIngredientId = ingredient.id
+        viewModel.selectedMealType = .lunch
+        viewModel.mealQuantityValueInput = "125"
+        viewModel.mealQuantityUnit = .g
+
+        await viewModel.createMealLog()
+
+        #expect(sessionStore.upsertedPresets.count == 1)
+        #expect(sessionStore.upsertedPresets.first?.userId == userId)
+        #expect(sessionStore.upsertedPresets.first?.ingredientId == ingredient.id)
+        #expect(sessionStore.upsertedPresets.first?.mealTypeRawValue == MealType.lunch.rawValue)
+        #expect(viewModel.mealQuickPresets.count == 1)
+        #expect(viewModel.mealQuickPresets.first?.ingredientId == ingredient.id)
+    }
+
+    @MainActor
+    @Test func createMealLogDoesNotPersistPresetInManualMode() async {
+        let userId = "user_\(UUID().uuidString)"
+        let apiClient = MockAPIClient()
+        let sessionStore = MockSessionStore()
+        sessionStore.sessionToken = "session_token_123"
+
+        apiClient.mealLogsResponse = emptyMealLogsResponse()
+
+        let viewModel = AuthViewModel(apiClient: apiClient, sessionStore: sessionStore)
+        viewModel.currentUser = testUserProfile(id: userId)
+        viewModel.useIngredientForMealLog = false
+        viewModel.mealIngredientNameInput = "Manual Ingredient"
+        viewModel.mealQuantityValueInput = "1"
+        viewModel.mealQuantityUnit = .cup
+        viewModel.mealConsumedGramsInput = "240"
+        viewModel.mealCaloriesInput = "100"
+        viewModel.mealCarbsInput = "10"
+        viewModel.mealProteinInput = "5"
+        viewModel.mealFatInput = "2"
+
+        await viewModel.createMealLog()
+
+        #expect(sessionStore.upsertedPresets.isEmpty)
+        #expect(viewModel.mealQuickPresets.isEmpty)
+    }
+
+}
+
+private func testUserProfile(id: String) -> UserProfile {
+    UserProfile(
+        id: id,
+        email: "test@example.com",
+        macroTargets: MacroTargets(calories: 2200, carbs: 250, protein: 150),
+        createdAt: "2026-03-29T00:00:00Z",
+        updatedAt: "2026-03-29T00:00:00Z"
+    )
+}
+
+private func testIngredient(id: String, name: String = "Ingredient") -> Ingredient {
+    Ingredient(
+        id: id,
+        userId: "user_test",
+        name: name,
+        brand: nil,
+        barcode: nil,
+        densityGPerMl: 1.0,
+        caloriesPer100g: 200,
+        carbsPer100g: 20,
+        proteinPer100g: 10,
+        fatPer100g: 5,
+        archived: false,
+        createdAt: "2026-03-29T00:00:00Z",
+        updatedAt: "2026-03-29T00:00:00Z"
+    )
+}
+
+private func emptyMealLogsResponse() -> MealLogsResponse {
+    MealLogsResponse(
+        date: "2026-03-29",
+        mealLogs: [],
+        totals: MealLogNutrition(calories: 0, carbs: 0, protein: 0, fat: 0)
+    )
+}
+
+private final class MockSessionStore: SessionStoreProtocol {
+    var sessionToken: String?
+    var baseURL: String = "http://127.0.0.1:4000"
+    var storedPresets: [StoredMealQuickPreset] = []
+    var upsertedPresets: [StoredMealQuickPreset] = []
+
+    func clearSession() {
+        sessionToken = nil
+    }
+
+    func loadMealQuickPresets(for userId: String) -> [StoredMealQuickPreset] {
+        storedPresets
+            .filter { $0.userId == userId }
+            .sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    func upsertMealQuickPreset(_ preset: StoredMealQuickPreset, maxPerUser: Int) {
+        upsertedPresets.append(preset)
+
+        storedPresets.removeAll {
+            $0.userId == preset.userId &&
+            $0.mealTypeRawValue == preset.mealTypeRawValue &&
+            $0.ingredientId == preset.ingredientId
+        }
+        storedPresets.append(preset)
+
+        let userPresets = storedPresets
+            .filter { $0.userId == preset.userId }
+            .sorted { $0.updatedAt > $1.updatedAt }
+
+        if userPresets.count > maxPerUser {
+            let allowedIds = Set(userPresets.prefix(maxPerUser).map { "\($0.mealTypeRawValue)-\($0.ingredientId)" })
+            storedPresets.removeAll {
+                $0.userId == preset.userId && !allowedIds.contains("\($0.mealTypeRawValue)-\($0.ingredientId)")
+            }
+        }
+    }
+}
+
+private final class MockAPIClient: APIClientProtocol {
+    var verifyResponse = MagicLinkVerifyResponse(
+        sessionToken: "mock_session",
+        user: testUserProfile(id: "mock_user")
+    )
+    var ingredientsResponse = IngredientsResponse(ingredients: [])
+    var mealLogsResponse = emptyMealLogsResponse()
+
+    private var dummyMealLog: MealLog {
+        MealLog(
+            id: "meal_dummy",
+            userId: "mock_user",
+            date: "2026-03-29",
+            mealType: .breakfast,
+            notes: nil,
+            items: [],
+            createdAt: "2026-03-29T00:00:00Z",
+            updatedAt: "2026-03-29T00:00:00Z"
+        )
+    }
+
+    func requestMagicLink(email: String, baseURL: String) async throws -> MagicLinkRequestResponse {
+        MagicLinkRequestResponse(message: "ok", token: nil, expiresAt: nil, provider: "mock", note: nil)
+    }
+
+    func verifyMagicLink(token: String, baseURL: String) async throws -> MagicLinkVerifyResponse {
+        verifyResponse
+    }
+
+    func fetchProfile(sessionToken: String, baseURL: String) async throws -> MeResponse {
+        MeResponse(user: verifyResponse.user)
+    }
+
+    func updateMacroTargets(sessionToken: String, baseURL: String, request: UpdateMacroTargetsRequest) async throws -> MeResponse {
+        MeResponse(user: verifyResponse.user)
+    }
+
+    func listIngredients(sessionToken: String, baseURL: String) async throws -> IngredientsResponse {
+        ingredientsResponse
+    }
+
+    func createIngredient(sessionToken: String, baseURL: String, request: CreateIngredientRequest) async throws -> IngredientResponse {
+        throw APIClientError.invalidResponse
+    }
+
+    func updateIngredient(sessionToken: String, baseURL: String, ingredientId: String, request: UpdateIngredientRequest) async throws -> IngredientResponse {
+        throw APIClientError.invalidResponse
+    }
+
+    func archiveIngredient(sessionToken: String, baseURL: String, ingredientId: String) async throws -> IngredientResponse {
+        throw APIClientError.invalidResponse
+    }
+
+    func signOut(sessionToken: String, baseURL: String) async throws {}
+
+    func listMealLogs(sessionToken: String, baseURL: String, date: String) async throws -> MealLogsResponse {
+        mealLogsResponse
+    }
+
+    func createMealLog(sessionToken: String, baseURL: String, request: CreateMealLogRequest) async throws -> MealLogResponse {
+        MealLogResponse(mealLog: dummyMealLog)
+    }
+
+    func updateMealLog(sessionToken: String, baseURL: String, mealLogId: String, request: UpdateMealLogRequest) async throws -> MealLogResponse {
+        MealLogResponse(mealLog: dummyMealLog)
+    }
+
+    func deleteMealLog(sessionToken: String, baseURL: String, mealLogId: String) async throws {}
 }

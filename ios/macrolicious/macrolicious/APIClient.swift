@@ -1,5 +1,55 @@
 import Foundation
 
+protocol APIClientProtocol {
+    func requestMagicLink(email: String, baseURL: String) async throws -> MagicLinkRequestResponse
+    func verifyMagicLink(token: String, baseURL: String) async throws -> MagicLinkVerifyResponse
+    func fetchProfile(sessionToken: String, baseURL: String) async throws -> MeResponse
+    func updateMacroTargets(
+        sessionToken: String,
+        baseURL: String,
+        request: UpdateMacroTargetsRequest
+    ) async throws -> MeResponse
+    func listIngredients(sessionToken: String, baseURL: String) async throws -> IngredientsResponse
+    func createIngredient(
+        sessionToken: String,
+        baseURL: String,
+        request: CreateIngredientRequest
+    ) async throws -> IngredientResponse
+    func updateIngredient(
+        sessionToken: String,
+        baseURL: String,
+        ingredientId: String,
+        request: UpdateIngredientRequest
+    ) async throws -> IngredientResponse
+    func archiveIngredient(
+        sessionToken: String,
+        baseURL: String,
+        ingredientId: String
+    ) async throws -> IngredientResponse
+    func signOut(sessionToken: String, baseURL: String) async throws
+    func listMealLogs(
+        sessionToken: String,
+        baseURL: String,
+        date: String
+    ) async throws -> MealLogsResponse
+    func createMealLog(
+        sessionToken: String,
+        baseURL: String,
+        request: CreateMealLogRequest
+    ) async throws -> MealLogResponse
+    func updateMealLog(
+        sessionToken: String,
+        baseURL: String,
+        mealLogId: String,
+        request: UpdateMealLogRequest
+    ) async throws -> MealLogResponse
+    func deleteMealLog(
+        sessionToken: String,
+        baseURL: String,
+        mealLogId: String
+    ) async throws
+}
+
 enum APIClientError: Error, LocalizedError {
     case invalidBaseURL
     case invalidResponse
@@ -17,7 +67,7 @@ enum APIClientError: Error, LocalizedError {
     }
 }
 
-final class APIClient {
+final class APIClient: APIClientProtocol {
     func requestMagicLink(email: String, baseURL: String) async throws -> MagicLinkRequestResponse {
         let payload = ["email": email]
         return try await send(

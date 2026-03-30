@@ -65,7 +65,7 @@ Current status snapshot:
 - [x] Auth/ownership checks for meal log access
 
 ## iOS
-- [ ] Unit tests for diary view model state transitions
+- [x] Unit tests for diary view model state transitions (quick preset load/apply/persist paths)
 - [ ] UI tests for add/edit/delete meal log entry
 
 Milestone exit criteria:
@@ -96,7 +96,7 @@ Status: ✅ Completed for core logging; target-progress UI remains.
 2. Run TestFlight smoke pass
 3. Fix regressions and finalize milestone
 
-Status: 🟡 In progress (backend + iOS tests green; UI tests + TestFlight smoke pending)
+Status: 🟡 In progress (backend + iOS tests green; more diary UI tests + TestFlight smoke pending)
 
 ---
 

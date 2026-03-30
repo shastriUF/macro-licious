@@ -1,7 +1,15 @@
 import Foundation
 import Security
 
-final class SessionStore {
+protocol SessionStoreProtocol: AnyObject {
+    var sessionToken: String? { get set }
+    var baseURL: String { get set }
+    func clearSession()
+    func loadMealQuickPresets(for userId: String) -> [StoredMealQuickPreset]
+    func upsertMealQuickPreset(_ preset: StoredMealQuickPreset, maxPerUser: Int)
+}
+
+final class SessionStore: SessionStoreProtocol {
     private enum Keys {
         static let sessionToken = "macrolicious.sessionToken"
         static let baseURL = "macrolicious.baseURL"
