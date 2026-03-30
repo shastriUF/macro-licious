@@ -212,7 +212,7 @@ struct ContentView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .dismissKeyboardOnTap()
+            .background(KeyboardDismissOnTapInstaller())
             .navigationTitle("MacroLicious")
             .onChange(of: viewModel.diaryDate) { _, _ in
                 guard viewModel.currentUser != nil else {
@@ -294,7 +294,6 @@ struct ContentView: View {
                         }
                     }
                     .scrollDismissesKeyboard(.interactively)
-                    .dismissKeyboardOnTap()
                     .navigationTitle(ingredient.name)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
@@ -326,7 +325,6 @@ struct ContentView: View {
                         }
                     }
                     .scrollDismissesKeyboard(.interactively)
-                    .dismissKeyboardOnTap()
                     .navigationTitle(mealLog.mealType.label)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
@@ -705,11 +703,69 @@ private struct MealLogListView: View {
     }
 }
 
-private extension View {
-    func dismissKeyboardOnTap() -> some View {
-        onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+private struct KeyboardDismissOnTapInstaller: UIViewRepresentable {
+    func makeUIView(context: Context) -> KeyboardDismissInstallerView {
+        KeyboardDismissInstallerView()
+    }
+
+    func updateUIView(_ uiView: KeyboardDismissInstallerView, context: Context) {}
+}
+
+private final class KeyboardDismissInstallerView: UIView {
+    private static let recognizerName = "macrolicious.keyboardDismissTap"
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        installRecognizerIfNeeded()
+    }
+
+    private func installRecognizerIfNeeded() {
+        guard let window else {
+            return
         }
+
+        if window.gestureRecognizers?.contains(where: { $0.name == Self.recognizerName }) == true {
+            return
+        }
+
+        let recognizer = KeyboardDismissTapGestureRecognizer(target: self, action: #selector(handleTap))
+        recognizer.name = Self.recognizerName
+        window.addGestureRecognizer(recognizer)
+    }
+
+    @objc private func handleTap() {
+        window?.endEditing(true)
+    }
+}
+
+private final class KeyboardDismissTapGestureRecognizer: UITapGestureRecognizer, UIGestureRecognizerDelegate {
+    override init(target: Any?, action: Selector?) {
+        super.init(target: target, action: action)
+        cancelsTouchesInView = false
+        delaysTouchesBegan = false
+        delaysTouchesEnded = false
+        delegate = self
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        true
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        var currentView = touch.view
+        while let view = currentView {
+            if view is UITextField || view is UITextView {
+                return false
+            }
+
+            currentView = view.superview
+        }
+
+        return true
     }
 }
 
