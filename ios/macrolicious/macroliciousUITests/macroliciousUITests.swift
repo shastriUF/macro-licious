@@ -62,6 +62,44 @@ final class macroliciousUITests: XCTestCase {
     }
 
     @MainActor
+    func testMealsShowsMacroTargetProgressWhenLaunchedSignedIn() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["UI_TEST_MODE"] = "1"
+        app.launchEnvironment["UI_TEST_SIGNED_IN"] = "1"
+        app.launch()
+
+        openMealsTab(in: app)
+
+        let progressSection = app.staticTexts["Target Progress"]
+        XCTAssertTrue(scrollToElement(progressSection, in: app, maxSwipes: 8))
+        XCTAssertTrue(app.staticTexts["Calories"].exists)
+        XCTAssertTrue(app.staticTexts["Carbs"].exists)
+        XCTAssertTrue(app.staticTexts["Protein"].exists)
+        XCTAssertTrue(app.staticTexts["Over by 200"].exists)
+    }
+
+    @MainActor
+    func testTapOutsideDismissesKeyboardOnSignIn() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["UI_TEST_MODE"] = "1"
+        app.launch()
+
+        let emailField = app.textFields["sign-in-email-field"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+
+        let focusStateLabel = app.staticTexts["sign-in-email-focus-state"]
+        XCTAssertTrue(focusStateLabel.waitForExistence(timeout: 5))
+
+        emailField.tap()
+        emailField.typeText("ui-test@example.com")
+        XCTAssertTrue(waitForLabelValue(on: focusStateLabel, equals: "focused", timeout: 5))
+
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+
+        XCTAssertTrue(waitForLabelValue(on: focusStateLabel, equals: "unfocused", timeout: 5))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
             // This measures how long it takes to launch your application.
@@ -75,5 +113,31 @@ final class macroliciousUITests: XCTestCase {
         let mealsTab = app.tabBars.buttons["Meals"]
         XCTAssertTrue(mealsTab.waitForExistence(timeout: 5))
         mealsTab.tap()
+    }
+
+    private func scrollToElement(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int) -> Bool {
+        for _ in 0..<maxSwipes {
+            if element.exists {
+                return true
+            }
+
+            app.swipeUp()
+        }
+
+        return element.exists
+    }
+
+    private func waitForLabelValue(on element: XCUIElement, equals expectedValue: String, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if element.label == expectedValue {
+                return true
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+
+        return element.label == expectedValue
     }
 }

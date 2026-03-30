@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var editFat = ""
     @State private var editMealType: MealType = .breakfast
     @State private var editMealNotes = ""
+    @FocusState private var isSignInEmailFocused: Bool
 
     init(viewModel: AuthViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -175,6 +176,7 @@ struct ContentView: View {
                 profileSection
                 statusSection
             }
+            .accessibilityIdentifier("sign-in-form")
             .scrollDismissesKeyboard(.interactively)
             .background(KeyboardDismissOnTapInstaller())
             .navigationTitle("Sign In")
@@ -265,6 +267,8 @@ struct ContentView: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .keyboardType(.emailAddress)
+                .accessibilityIdentifier("sign-in-email-field")
+                .focused($isSignInEmailFocused)
 
             Button("Request Magic Link") {
                 Task {
@@ -287,6 +291,13 @@ struct ContentView: View {
                 Text("Check your email and tap the link to return to the app.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+            }
+
+            if isUITestMode {
+                Text(isSignInEmailFocused ? "focused" : "unfocused")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("sign-in-email-focus-state")
             }
         }
     }
@@ -415,6 +426,7 @@ struct ContentView: View {
             Text(viewModel.statusMessage.isEmpty ? "Ready" : viewModel.statusMessage)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .accessibilityIdentifier("status-message-label")
         }
     }
 
@@ -515,6 +527,16 @@ struct ContentView: View {
         }
 
         return !viewModel.mealIngredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var isUITestMode: Bool {
+        let launchArguments = ProcessInfo.processInfo.arguments
+        let launchEnvironment = ProcessInfo.processInfo.environment
+
+        return launchArguments.contains("-ui-testing")
+            || launchArguments.contains("-ui-testing-signed-in")
+            || launchEnvironment["UI_TEST_MODE"] == "1"
+            || launchEnvironment["UI_TEST_SIGNED_IN"] == "1"
     }
 }
 
@@ -735,6 +757,7 @@ private struct MacroTargetProgressView: View {
             MacroProgressRow(label: "Protein", consumed: totals.protein, target: targets.protein, tint: .green)
         }
         .padding(.vertical, 4)
+        .accessibilityIdentifier("macro-target-progress-section")
     }
 }
 
@@ -772,6 +795,7 @@ private struct MacroProgressRow: View {
                     .foregroundStyle(.orange)
             }
         }
+        .accessibilityIdentifier("macro-progress-\(label.lowercased())")
     }
 }
 

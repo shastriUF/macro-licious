@@ -41,6 +41,17 @@
                ReferencedContainer = "container:macrolicious.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B685A0EC2F42C3550011D414"
+               BuildableName = "macroliciousUITests.xctest"
+               BlueprintName = "macroliciousUITests"
+               ReferencedContainer = "container:macrolicious.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
