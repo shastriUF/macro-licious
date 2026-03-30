@@ -232,10 +232,11 @@ Status: ✅ Mostly complete (core foundation delivered; release hardening remain
 - Meal diary screens.
 - Unit conversion + macro calculations.
 - Daily totals and target progress.
+- UI refinement phase for modernized meal logging UX (cards/timeline/progress/quick actions).
 - Testing: add calculation regression tests and iOS UI tests for add/edit/delete meal log flows.
 - Release strategy: push milestone-complete TestFlight build and run end-to-end diary smoke test on device.
 
-Status: 🟡 In progress (core diary + tabbed navigation shipped; remaining target-progress UI and final hardening tracked in `MILESTONE_2_PLAN.md`)
+Status: 🟡 In progress (core diary + tabbed navigation shipped; active UI iteration phase and final hardening tracked in `MILESTONE_2_PLAN.md`)
 
 ## Milestone 3 — Recipes + Wet Weight
 - Recipe creation/editing.
@@ -341,6 +342,17 @@ Status: ⏸️ Deferred until Milestones 1-5 are complete
 - [ ] Add quick-log from ingredient and recipe.
 - [ ] Show per-meal and daily totals versus macro targets.
 - [ ] Store immutable nutrition snapshot on each logged item.
+
+### UI Iteration (Meals UX)
+- [ ] Add macro progress card (today vs target for calories/carbs/protein/fat).
+- [ ] Group diary into meal timeline sections with per-section subtotals.
+- [ ] Upgrade quick-add strip with recent/favorite presets and repeat shortcuts.
+- [ ] Add empty states with one-tap starter actions (add meal/use preset/copy prior meal).
+- [ ] Add undo affordance for destructive actions (delete/archive).
+- [ ] Add ingredient library search/sort controls (A-Z, recent, macro density).
+- [ ] Evaluate bottom-sheet composer for add/edit meal entry flow.
+- [ ] Add accessibility + motion pass (Dynamic Type, VoiceOver labels, subtle haptics).
+- [ ] Expand iOS UI tests to cover meal timeline, progress card, and quick-add shortcuts.
 
 ### Recipes & Wet Weight
 - [ ] Build recipe create/edit/save flow.

@@ -17,7 +17,7 @@ Current status snapshot:
 - ✅ iOS diary flow implemented (ingredient-library + manual snapshot logging, add/edit/delete, daily totals).
 - ✅ iOS tabbed IA implemented (Sign In / Meals / Ingredients).
 - ✅ iOS diary UX/stability pass completed (segmented entry modes, computed validation feedback, safer loading behavior).
-- 🟡 Remaining: macro target progress visualization in diary + dedicated diary UI tests + device smoke pass.
+- 🟡 Remaining: macro target progress visualization + dedicated meal diary UI tests + planned Phase D UI refinement + device smoke pass.
 
 ---
 
@@ -56,6 +56,13 @@ Current status snapshot:
 - [x] Add/edit/delete item interactions
 - [x] Tab-based top-level navigation for auth, meals, and ingredients
 - [ ] Totals and macro target progress UI (totals complete, target progress pending)
+
+## 3.4 iOS UX Iteration (Phase D)
+- [ ] Add daily macro progress card (calories/carbs/protein/fat vs targets)
+- [ ] Present diary as meal timeline sections with section subtotals
+- [ ] Expand quick-add strip (recent/favorites/repeat shortcuts)
+- [ ] Add richer empty states and undo affordance for delete/archive
+- [ ] Add ingredient list search/sort controls for faster lookup
 
 ---
 
@@ -99,6 +106,15 @@ Status: ✅ Completed for core logging; target-progress UI remains.
 3. Fix regressions and finalize milestone
 
 Status: 🟡 In progress (backend + iOS tests green; more diary UI tests + TestFlight smoke pending)
+
+## Phase D — UI Iteration
+1. Ship macro progress card in Meals tab
+2. Ship sectioned meal timeline + subtotals
+3. Ship upgraded quick-add shortcuts and empty states
+4. Add undo UX for destructive diary actions
+5. Expand meal-flow UI test coverage
+
+Status: ⏳ Planned (next active iteration)
 
 ---
 
