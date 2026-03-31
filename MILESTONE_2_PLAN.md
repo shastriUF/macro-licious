@@ -1,6 +1,6 @@
 # Milestone 2 Plan — Logging Core
 
-Last updated: 2026-03-29
+Last updated: 2026-03-31
 
 ## 1) Milestone Objective
 Deliver the first complete daily logging workflow so calories/macros can be tracked end-to-end from app input to persisted meal logs.
@@ -17,6 +17,7 @@ Current status snapshot:
 - ✅ iOS diary flow implemented (ingredient-library + manual snapshot logging, add/edit/delete, daily totals).
 - ✅ iOS tabbed IA implemented (Sign In / Meals / Ingredients).
 - ✅ iOS diary UX/stability pass completed (segmented entry modes, computed validation feedback, safer loading behavior).
+- ✅ Count unit, serving size, and default unit per ingredient implemented end-to-end (backend + iOS + migration).
 - 🟡 Remaining: dedicated meal diary UI tests + planned Phase D UI refinement + device smoke pass.
 
 ---

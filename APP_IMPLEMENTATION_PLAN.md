@@ -1,6 +1,6 @@
 # Calorie & Macro Tracker — Product + Implementation Plan
 
-_Last updated: 2026-03-29_
+_Last updated: 2026-03-31_
 
 ## 1) Product Goal
 Build a lightweight, low-friction calorie and macro tracker focused on home cooking and ingredient-level precision, without ad-heavy UX.
@@ -128,6 +128,8 @@ Required fields:
 - Barcode (optional)
 - Nutrition per 100g (or per package with weight)
 - Density (optional, for volume-to-weight conversion)
+- Serving size in grams (optional, for count-based logging)
+- Default quantity unit (optional, auto-selects unit in diary composer)
 
 Behavior:
 - If barcode exists and matches existing item, prompt merge/replace.
@@ -176,7 +178,8 @@ Key concepts:
 - Internal canonical units:
   - mass: g
   - volume: ml
-- UI accepts: g, oz, lb, ml, tsp, tbsp, cup.
+- UI accepts: g, oz, lb, ml, tsp, tbsp, cup, count.
+- `count` unit converts to grams via ingredient-level `servingSizeGrams` (e.g., 1 egg = 50g).
 - Convert volume->mass only when density is available.
 - If density is missing:
   - either store as volume-only and warn reduced precision,
@@ -332,8 +335,10 @@ Status: ⏸️ Deferred until Milestones 1-5 are complete
 
 ### Ingredient System
 - [x] Implement ingredient create/read/update/archive.
-- [x] Support input units: g, oz, lb, ml, tsp, tbsp, cup.
+- [x] Support input units: g, oz, lb, ml, tsp, tbsp, cup, count.
 - [x] Implement conversion engine with canonical storage and density-aware volume conversion.
+- [x] Add count unit with per-ingredient serving size (grams per count) for items like eggs.
+- [x] Add optional default quantity unit per ingredient (auto-selects in diary composer).
 - [x] Add manual custom ingredient creation flow optimized for raw produce.
 
 ### Meal Logging
