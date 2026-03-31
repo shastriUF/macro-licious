@@ -9,7 +9,7 @@ import type { MealLog } from '../domain/models';
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 const mealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
-const quantityUnitSchema = z.enum(['g', 'oz', 'lb', 'ml', 'tsp', 'tbsp', 'cup']);
+const quantityUnitSchema = z.enum(['g', 'oz', 'lb', 'ml', 'tsp', 'tbsp', 'cup', 'count']);
 
 const mealLogItemSchema = z.object({
   ingredientId: z.string().min(1).optional(),

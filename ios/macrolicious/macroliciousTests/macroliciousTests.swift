@@ -182,6 +182,29 @@ struct macroliciousTests {
         #expect(QuantityUnit.tsp.isVolume == true)
         #expect(QuantityUnit.g.isVolume == false)
         #expect(QuantityUnit.cup.isMass == false)
+        #expect(QuantityUnit.count.isCount == true)
+        #expect(QuantityUnit.count.isMass == false)
+        #expect(QuantityUnit.count.isVolume == false)
+    }
+
+    @Test func countUnitConvertsToGramsWithServingSize() {
+        // 2 eggs at 50g each = 100g
+        let result = UnitConversion.toCanonicalGrams(2, unit: .count, servingSizeGrams: 50)
+        #expect(result != nil)
+        #expect(result! == 100)
+    }
+
+    @Test func countUnitReturnsNilWithoutServingSize() {
+        #expect(UnitConversion.toCanonicalGrams(2, unit: .count) == nil)
+        #expect(UnitConversion.toCanonicalGrams(2, unit: .count, servingSizeGrams: nil) == nil)
+    }
+
+    @Test func computesNutritionForCountUnit() {
+        let egg = UnitConversion.NutritionValues(calories: 155, carbs: 1.1, protein: 13, fat: 11)
+        let result = UnitConversion.computeNutrition(quantity: 2, unit: .count, per100g: egg, servingSizeGrams: 50)
+        #expect(result != nil)
+        #expect(result!.calories == 155)
+        #expect(result!.protein == 13)
     }
 
     @MainActor
@@ -329,6 +352,8 @@ private func testIngredient(id: String, name: String = "Ingredient") -> Ingredie
         brand: nil,
         barcode: nil,
         densityGPerMl: 1.0,
+        servingSizeGrams: nil,
+        defaultQuantityUnit: nil,
         caloriesPer100g: 200,
         carbsPer100g: 20,
         proteinPer100g: 10,

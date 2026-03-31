@@ -18,8 +18,11 @@ export type MassUnit = 'g' | 'oz' | 'lb';
 // ─── Volume unit identifiers ─────────────────────────────────────────
 export type VolumeUnit = 'ml' | 'tsp' | 'tbsp' | 'cup';
 
+// ─── Count unit identifier ───────────────────────────────────────────
+export type CountUnit = 'count';
+
 // ─── Union of all supported units ────────────────────────────────────
-export type QuantityUnit = MassUnit | VolumeUnit;
+export type QuantityUnit = MassUnit | VolumeUnit | CountUnit;
 
 // ─── Fixed conversion factors (NIST / USDA standard) ─────────────────
 export const MASS_TO_GRAMS: Record<MassUnit, number> = {
@@ -48,8 +51,12 @@ export function isVolumeUnit(unit: string): unit is VolumeUnit {
   return ALL_VOLUME_UNITS.has(unit);
 }
 
+export function isCountUnit(unit: string): unit is CountUnit {
+  return unit === 'count';
+}
+
 export function isValidUnit(unit: string): unit is QuantityUnit {
-  return isMassUnit(unit) || isVolumeUnit(unit);
+  return isMassUnit(unit) || isVolumeUnit(unit) || isCountUnit(unit);
 }
 
 // ─── Core conversion functions ───────────────────────────────────────
@@ -84,14 +91,22 @@ export function volumeToGrams(
  * Convert any supported unit to grams.
  * - Mass units: direct conversion.
  * - Volume units: requires density; returns null if unavailable.
+ * - Count unit: requires servingSizeGrams; returns null if unavailable.
  */
 export function toCanonicalGrams(
   value: number,
   unit: QuantityUnit,
-  densityGPerMl?: number | null
+  densityGPerMl?: number | null,
+  servingSizeGrams?: number | null
 ): number | null {
   if (isMassUnit(unit)) {
     return toGrams(value, unit);
+  }
+  if (isCountUnit(unit)) {
+    if (servingSizeGrams == null || servingSizeGrams <= 0) {
+      return null;
+    }
+    return value * servingSizeGrams;
   }
   return volumeToGrams(value, unit, densityGPerMl);
 }
@@ -105,9 +120,10 @@ export function computeNutrition(
   quantity: number,
   unit: QuantityUnit,
   nutritionPer100g: { calories: number; carbs: number; protein: number; fat: number },
-  densityGPerMl?: number | null
+  densityGPerMl?: number | null,
+  servingSizeGrams?: number | null
 ): { calories: number; carbs: number; protein: number; fat: number } | null {
-  const grams = toCanonicalGrams(quantity, unit, densityGPerMl);
+  const grams = toCanonicalGrams(quantity, unit, densityGPerMl, servingSizeGrams);
   if (grams == null) {
     return null;
   }

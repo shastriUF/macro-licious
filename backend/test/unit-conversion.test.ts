@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   computeNutrition,
+  isCountUnit,
   isMassUnit,
   isValidUnit,
   isVolumeUnit,
@@ -34,7 +35,14 @@ describe('unit-conversion', () => {
     it('validates any supported unit', () => {
       expect(isValidUnit('g')).toBe(true);
       expect(isValidUnit('cup')).toBe(true);
+      expect(isValidUnit('count')).toBe(true);
       expect(isValidUnit('litre')).toBe(false);
+    });
+
+    it('identifies count unit', () => {
+      expect(isCountUnit('count')).toBe(true);
+      expect(isCountUnit('g')).toBe(false);
+      expect(isCountUnit('cup')).toBe(false);
     });
   });
 
@@ -113,6 +121,17 @@ describe('unit-conversion', () => {
       expect(toCanonicalGrams(1, 'cup')).toBeNull();
       expect(toCanonicalGrams(1, 'tsp', null)).toBeNull();
     });
+
+    it('converts count with servingSizeGrams', () => {
+      // 2 eggs at 50g per egg = 100g
+      expect(toCanonicalGrams(2, 'count', null, 50)).toBe(100);
+    });
+
+    it('returns null for count without servingSizeGrams', () => {
+      expect(toCanonicalGrams(2, 'count')).toBeNull();
+      expect(toCanonicalGrams(2, 'count', null, null)).toBeNull();
+      expect(toCanonicalGrams(2, 'count', null, 0)).toBeNull();
+    });
   });
 
   describe('computeNutrition', () => {
@@ -147,6 +166,20 @@ describe('unit-conversion', () => {
 
     it('returns null for volume without density', () => {
       const result = computeNutrition(1, 'cup', chickenPer100g);
+      expect(result).toBeNull();
+    });
+
+    it('computes nutrition for count with servingSizeGrams', () => {
+      const eggPer100g = { calories: 155, carbs: 1.1, protein: 13, fat: 11 };
+      // 2 eggs at 50g each = 100g → factor 1.0
+      const result = computeNutrition(2, 'count', eggPer100g, null, 50);
+      expect(result).not.toBeNull();
+      expect(result!.calories).toBe(155);
+      expect(result!.protein).toBe(13);
+    });
+
+    it('returns null for count without servingSizeGrams', () => {
+      const result = computeNutrition(2, 'count', chickenPer100g);
       expect(result).toBeNull();
     });
 

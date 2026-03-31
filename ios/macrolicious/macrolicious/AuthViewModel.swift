@@ -57,6 +57,8 @@ final class AuthViewModel: ObservableObject {
     @Published var ingredientNameInput = ""
     @Published var ingredientBrandInput = ""
     @Published var ingredientDensityInput = ""
+    @Published var ingredientServingSizeInput = ""
+    @Published var ingredientDefaultUnitInput: QuantityUnit? = nil
     @Published var ingredientCaloriesInput = ""
     @Published var ingredientCarbsInput = ""
     @Published var ingredientProteinInput = ""
@@ -97,7 +99,8 @@ final class AuthViewModel: ObservableObject {
               let consumedGrams = UnitConversion.toCanonicalGrams(
                 quantity,
                 unit: mealQuantityUnit,
-                densityGPerMl: ingredient.densityGPerMl
+                densityGPerMl: ingredient.densityGPerMl,
+                servingSizeGrams: ingredient.servingSizeGrams
               ),
               let nutrition = UnitConversion.computeNutrition(
                 quantity: quantity,
@@ -108,7 +111,8 @@ final class AuthViewModel: ObservableObject {
                     protein: ingredient.proteinPer100g,
                     fat: ingredient.fatPer100g
                 ),
-                densityGPerMl: ingredient.densityGPerMl
+                densityGPerMl: ingredient.densityGPerMl,
+                servingSizeGrams: ingredient.servingSizeGrams
               )
         else {
             return nil
@@ -280,6 +284,14 @@ final class AuthViewModel: ObservableObject {
             return
         }
 
+        let servingSize = ingredientServingSizeInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? nil
+            : Double(ingredientServingSizeInput)
+        if let servingSize, servingSize <= 0 {
+            statusMessage = "Serving size must be greater than 0 when provided."
+            return
+        }
+
         let normalizedBrand = ingredientBrandInput.trimmingCharacters(in: .whitespacesAndNewlines)
 
         await perform {
@@ -288,6 +300,8 @@ final class AuthViewModel: ObservableObject {
                 brand: normalizedBrand.isEmpty ? nil : normalizedBrand,
                 barcode: nil,
                 densityGPerMl: density,
+                servingSizeGrams: servingSize,
+                defaultQuantityUnit: ingredientDefaultUnitInput,
                 caloriesPer100g: calories,
                 carbsPer100g: carbs,
                 proteinPer100g: protein,
@@ -447,6 +461,8 @@ final class AuthViewModel: ObservableObject {
                 brand: ingredient.brand,
                 barcode: ingredient.barcode,
                 densityGPerMl: ingredient.densityGPerMl,
+                servingSizeGrams: ingredient.servingSizeGrams,
+                defaultQuantityUnit: ingredient.defaultQuantityUnit,
                 caloriesPer100g: ingredient.caloriesPer100g,
                 carbsPer100g: ingredient.carbsPer100g,
                 proteinPer100g: ingredient.proteinPer100g,
@@ -620,6 +636,8 @@ final class AuthViewModel: ObservableObject {
         ingredientNameInput = ""
         ingredientBrandInput = ""
         ingredientDensityInput = ""
+        ingredientServingSizeInput = ""
+        ingredientDefaultUnitInput = nil
         ingredientCaloriesInput = ""
         ingredientCarbsInput = ""
         ingredientProteinInput = ""
@@ -779,6 +797,13 @@ final class AuthViewModel: ObservableObject {
         }
 
         selectedMealIngredientId = ingredients[0].id
+        applyDefaultUnit(for: ingredients[0])
+    }
+
+    func applyDefaultUnit(for ingredient: Ingredient) {
+        if let defaultUnit = ingredient.defaultQuantityUnit {
+            mealQuantityUnit = defaultUnit
+        }
     }
 
     private func applyDiaryResponse(_ response: MealLogsResponse) {

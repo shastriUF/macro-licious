@@ -14,7 +14,7 @@ enum VolumeUnit: String, CaseIterable, Codable {
 }
 
 enum QuantityUnit: String, CaseIterable, Codable {
-    case g, oz, lb, ml, tsp, tbsp, cup
+    case g, oz, lb, ml, tsp, tbsp, cup, count
 
     var isMass: Bool {
         switch self {
@@ -23,7 +23,14 @@ enum QuantityUnit: String, CaseIterable, Codable {
         }
     }
 
-    var isVolume: Bool { !isMass }
+    var isVolume: Bool {
+        switch self {
+        case .ml, .tsp, .tbsp, .cup: return true
+        default: return false
+        }
+    }
+
+    var isCount: Bool { self == .count }
 
     var massUnit: MassUnit? {
         MassUnit(rawValue: rawValue)
@@ -36,13 +43,14 @@ enum QuantityUnit: String, CaseIterable, Codable {
     /// Human-readable label for picker UI.
     var label: String {
         switch self {
-        case .g:    return "g"
-        case .oz:   return "oz"
-        case .lb:   return "lb"
-        case .ml:   return "ml"
-        case .tsp:  return "tsp"
-        case .tbsp: return "tbsp"
-        case .cup:  return "cup"
+        case .g:     return "g"
+        case .oz:    return "oz"
+        case .lb:    return "lb"
+        case .ml:    return "ml"
+        case .tsp:   return "tsp"
+        case .tbsp:  return "tbsp"
+        case .cup:   return "cup"
+        case .count: return "count"
         }
     }
 }
@@ -81,10 +89,14 @@ enum UnitConversion {
     }
 
     /// Convert any supported unit to canonical grams.
-    /// Mass units convert directly; volume units require density.
-    static func toCanonicalGrams(_ value: Double, unit: QuantityUnit, densityGPerMl: Double? = nil) -> Double? {
+    /// Mass units convert directly; volume units require density; count requires servingSizeGrams.
+    static func toCanonicalGrams(_ value: Double, unit: QuantityUnit, densityGPerMl: Double? = nil, servingSizeGrams: Double? = nil) -> Double? {
         if let mass = unit.massUnit {
             return toGrams(value, unit: mass)
+        }
+        if unit.isCount {
+            guard let serving = servingSizeGrams, serving > 0 else { return nil }
+            return value * serving
         }
         if let vol = unit.volumeUnit {
             return volumeToGrams(value, unit: vol, densityGPerMl: densityGPerMl)
@@ -102,14 +114,15 @@ enum UnitConversion {
     }
 
     /// Compute nutrition from a quantity in any supported unit.
-    /// Returns nil if gram conversion fails (volume without density).
+    /// Returns nil if gram conversion fails (volume without density, count without servingSizeGrams).
     static func computeNutrition(
         quantity: Double,
         unit: QuantityUnit,
         per100g: NutritionValues,
-        densityGPerMl: Double? = nil
+        densityGPerMl: Double? = nil,
+        servingSizeGrams: Double? = nil
     ) -> NutritionValues? {
-        guard let grams = toCanonicalGrams(quantity, unit: unit, densityGPerMl: densityGPerMl) else {
+        guard let grams = toCanonicalGrams(quantity, unit: unit, densityGPerMl: densityGPerMl, servingSizeGrams: servingSizeGrams) else {
             return nil
         }
 

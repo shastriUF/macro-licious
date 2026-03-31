@@ -26,6 +26,8 @@ export type Ingredient = {
   brand: string | null;
   barcode: string | null;
   densityGPerMl: number | null;
+  servingSizeGrams: number | null;
+  defaultQuantityUnit: QuantityUnit | null;
   caloriesPer100g: number;
   carbsPer100g: number;
   proteinPer100g: number;
@@ -40,6 +42,8 @@ export type CreateIngredientInput = {
   brand?: string;
   barcode?: string;
   densityGPerMl?: number;
+  servingSizeGrams?: number;
+  defaultQuantityUnit?: QuantityUnit;
   caloriesPer100g: number;
   carbsPer100g: number;
   proteinPer100g: number;
@@ -50,7 +54,7 @@ export type UpdateIngredientInput = Partial<CreateIngredientInput>;
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-export type QuantityUnit = 'g' | 'oz' | 'lb' | 'ml' | 'tsp' | 'tbsp' | 'cup';
+export type QuantityUnit = 'g' | 'oz' | 'lb' | 'ml' | 'tsp' | 'tbsp' | 'cup' | 'count';
 
 export type MealLogItemNutrition = {
   calories: number;

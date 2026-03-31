@@ -218,4 +218,67 @@ describe('ingredient routes', () => {
 
     await app.close();
   });
+
+  it('creates ingredient with servingSizeGrams and defaultQuantityUnit', async () => {
+    const app = buildApp();
+    const sessionToken = await createSessionToken(app);
+
+    const createResponse = await app.inject({
+      method: 'POST',
+      url: '/ingredients',
+      headers: {
+        authorization: `Bearer ${sessionToken}`
+      },
+      payload: {
+        name: 'Egg',
+        servingSizeGrams: 50,
+        defaultQuantityUnit: 'count',
+        caloriesPer100g: 155,
+        carbsPer100g: 1.1,
+        proteinPer100g: 13,
+        fatPer100g: 11
+      }
+    });
+
+    expect(createResponse.statusCode).toBe(201);
+
+    const body = createResponse.json() as {
+      ingredient: {
+        id: string;
+        name: string;
+        servingSizeGrams: number | null;
+        defaultQuantityUnit: string | null;
+      };
+    };
+
+    expect(body.ingredient.name).toBe('Egg');
+    expect(body.ingredient.servingSizeGrams).toBe(50);
+    expect(body.ingredient.defaultQuantityUnit).toBe('count');
+
+    const patchResponse = await app.inject({
+      method: 'PATCH',
+      url: `/ingredients/${body.ingredient.id}`,
+      headers: {
+        authorization: `Bearer ${sessionToken}`
+      },
+      payload: {
+        servingSizeGrams: 55,
+        defaultQuantityUnit: 'g'
+      }
+    });
+
+    expect(patchResponse.statusCode).toBe(200);
+
+    const patchBody = patchResponse.json() as {
+      ingredient: {
+        servingSizeGrams: number | null;
+        defaultQuantityUnit: string | null;
+      };
+    };
+
+    expect(patchBody.ingredient.servingSizeGrams).toBe(55);
+    expect(patchBody.ingredient.defaultQuantityUnit).toBe('g');
+
+    await app.close();
+  });
 });

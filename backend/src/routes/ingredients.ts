@@ -5,11 +5,15 @@ import { extractBearerToken } from '../auth/session';
 import { authStore } from '../domain/auth-store';
 import { ingredientStore } from '../domain/ingredient-store';
 
+const quantityUnitEnum = z.enum(['g', 'oz', 'lb', 'ml', 'tsp', 'tbsp', 'cup', 'count']);
+
 const createIngredientSchema = z.object({
   name: z.string().min(1),
   brand: z.string().optional(),
   barcode: z.string().optional(),
   densityGPerMl: z.number().positive().optional(),
+  servingSizeGrams: z.number().positive().optional(),
+  defaultQuantityUnit: quantityUnitEnum.optional(),
   caloriesPer100g: z.number().nonnegative(),
   carbsPer100g: z.number().nonnegative(),
   proteinPer100g: z.number().nonnegative(),

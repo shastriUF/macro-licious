@@ -18,6 +18,8 @@ struct ContentView: View {
     @State private var editName = ""
     @State private var editBrand = ""
     @State private var editDensity = ""
+    @State private var editServingSize = ""
+    @State private var editDefaultUnit: QuantityUnit? = nil
     @State private var editCalories = ""
     @State private var editCarbs = ""
     @State private var editProtein = ""
@@ -107,6 +109,14 @@ struct ContentView: View {
                         TextField("Brand (optional)", text: $editBrand)
                         TextField("Density g/ml (optional)", text: $editDensity)
                             .keyboardType(.decimalPad)
+                        TextField("Serving size grams (optional)", text: $editServingSize)
+                            .keyboardType(.decimalPad)
+                        Picker("Default unit", selection: $editDefaultUnit) {
+                            Text("None").tag(QuantityUnit?.none)
+                            ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
+                                Text(unit.label).tag(QuantityUnit?.some(unit))
+                            }
+                        }
                         TextField("Calories / 100g", text: $editCalories)
                             .keyboardType(.decimalPad)
                         TextField("Carbs / 100g", text: $editCarbs)
@@ -364,6 +374,14 @@ struct ContentView: View {
             }
             TextField("Density g/ml (optional)", text: $viewModel.ingredientDensityInput)
                 .keyboardType(.decimalPad)
+            TextField("Serving size grams (optional)", text: $viewModel.ingredientServingSizeInput)
+                .keyboardType(.decimalPad)
+            Picker("Default unit", selection: $viewModel.ingredientDefaultUnitInput) {
+                Text("None").tag(QuantityUnit?.none)
+                ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
+                    Text(unit.label).tag(QuantityUnit?.some(unit))
+                }
+            }
             TextField("Calories / 100g", text: $viewModel.ingredientCaloriesInput)
                 .keyboardType(.decimalPad)
             TextField("Carbs / 100g", text: $viewModel.ingredientCarbsInput)
@@ -394,6 +412,12 @@ struct ContentView: View {
 
                         if let density = ingredient.densityGPerMl {
                             Text("Density: \(density, specifier: "%.2f") g/ml")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if let serving = ingredient.servingSizeGrams {
+                            Text("Serving: \(serving, specifier: "%.0f")g")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -438,6 +462,12 @@ struct ContentView: View {
         } else {
             editDensity = ""
         }
+        if let serving = ingredient.servingSizeGrams {
+            editServingSize = String(serving)
+        } else {
+            editServingSize = ""
+        }
+        editDefaultUnit = ingredient.defaultQuantityUnit
         editCalories = String(ingredient.caloriesPer100g)
         editCarbs = String(ingredient.carbsPer100g)
         editProtein = String(ingredient.proteinPer100g)
@@ -447,6 +477,7 @@ struct ContentView: View {
 
     private func saveEditedIngredient(_ ingredient: Ingredient) async {
         let density = editDensity.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : Double(editDensity)
+        let serving = editServingSize.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : Double(editServingSize)
 
         guard
             let calories = Double(editCalories),
@@ -458,6 +489,7 @@ struct ContentView: View {
             protein >= 0,
             fat >= 0,
             density == nil || density! > 0,
+            serving == nil || serving! > 0,
             !editName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else {
             return
@@ -470,6 +502,8 @@ struct ContentView: View {
             brand: editBrand.isEmpty ? nil : editBrand,
             barcode: ingredient.barcode,
             densityGPerMl: density,
+            servingSizeGrams: serving,
+            defaultQuantityUnit: editDefaultUnit,
             caloriesPer100g: calories,
             carbsPer100g: carbs,
             proteinPer100g: protein,
@@ -658,6 +692,11 @@ private struct DiaryComposerView: View {
                 }
             }
             .pickerStyle(.menu)
+            .onChange(of: viewModel.selectedMealIngredientId) { _, newId in
+                if let ingredient = viewModel.ingredients.first(where: { $0.id == newId }) {
+                    viewModel.applyDefaultUnit(for: ingredient)
+                }
+            }
 
             if let ingredient = viewModel.selectedMealIngredient {
                 Text(
@@ -668,6 +707,12 @@ private struct DiaryComposerView: View {
 
                 if let density = ingredient.densityGPerMl {
                     Text("Density: \(density, specifier: "%.2f") g/ml")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let serving = ingredient.servingSizeGrams {
+                    Text("Serving: \(serving, specifier: "%.0f")g per count")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

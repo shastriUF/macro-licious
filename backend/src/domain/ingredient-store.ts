@@ -19,6 +19,8 @@ export class IngredientStore {
           brand: input.brand?.trim() || null,
           barcode: input.barcode?.trim() || null,
           density_g_per_ml: input.densityGPerMl ?? null,
+          serving_size_grams: input.servingSizeGrams ?? null,
+          default_quantity_unit: input.defaultQuantityUnit ?? null,
           calories_per_100g: input.caloriesPer100g,
           carbs_per_100g: input.carbsPer100g,
           protein_per_100g: input.proteinPer100g,
@@ -46,6 +48,8 @@ export class IngredientStore {
       brand: input.brand?.trim() || null,
       barcode: input.barcode?.trim() || null,
       densityGPerMl: input.densityGPerMl ?? null,
+      servingSizeGrams: input.servingSizeGrams ?? null,
+      defaultQuantityUnit: input.defaultQuantityUnit ?? null,
       caloriesPer100g: input.caloriesPer100g,
       carbsPer100g: input.carbsPer100g,
       proteinPer100g: input.proteinPer100g,
@@ -122,6 +126,8 @@ export class IngredientStore {
       if (input.brand !== undefined) updatePayload.brand = input.brand.trim() || null;
       if (input.barcode !== undefined) updatePayload.barcode = input.barcode.trim() || null;
       if (input.densityGPerMl !== undefined) updatePayload.density_g_per_ml = input.densityGPerMl;
+      if (input.servingSizeGrams !== undefined) updatePayload.serving_size_grams = input.servingSizeGrams;
+      if (input.defaultQuantityUnit !== undefined) updatePayload.default_quantity_unit = input.defaultQuantityUnit;
       if (input.caloriesPer100g !== undefined) updatePayload.calories_per_100g = input.caloriesPer100g;
       if (input.carbsPer100g !== undefined) updatePayload.carbs_per_100g = input.carbsPer100g;
       if (input.proteinPer100g !== undefined) updatePayload.protein_per_100g = input.proteinPer100g;
@@ -158,6 +164,8 @@ export class IngredientStore {
       brand: input.brand !== undefined ? input.brand.trim() || null : existingIngredient.brand,
       barcode: input.barcode !== undefined ? input.barcode.trim() || null : existingIngredient.barcode,
       densityGPerMl: input.densityGPerMl ?? existingIngredient.densityGPerMl,
+      servingSizeGrams: input.servingSizeGrams !== undefined ? (input.servingSizeGrams ?? null) : existingIngredient.servingSizeGrams,
+      defaultQuantityUnit: input.defaultQuantityUnit !== undefined ? (input.defaultQuantityUnit ?? null) : existingIngredient.defaultQuantityUnit,
       caloriesPer100g: input.caloriesPer100g ?? existingIngredient.caloriesPer100g,
       carbsPer100g: input.carbsPer100g ?? existingIngredient.carbsPer100g,
       proteinPer100g: input.proteinPer100g ?? existingIngredient.proteinPer100g,
@@ -222,6 +230,8 @@ export class IngredientStore {
     brand: string | null;
     barcode: string | null;
     density_g_per_ml: number | null;
+    serving_size_grams: number | null;
+    default_quantity_unit: string | null;
     calories_per_100g: number;
     carbs_per_100g: number;
     protein_per_100g: number;
@@ -237,6 +247,8 @@ export class IngredientStore {
       brand: row.brand,
       barcode: row.barcode,
       densityGPerMl: row.density_g_per_ml == null ? null : Number(row.density_g_per_ml),
+      servingSizeGrams: row.serving_size_grams == null ? null : Number(row.serving_size_grams),
+      defaultQuantityUnit: (row.default_quantity_unit as Ingredient['defaultQuantityUnit']) ?? null,
       caloriesPer100g: Number(row.calories_per_100g),
       carbsPer100g: Number(row.carbs_per_100g),
       proteinPer100g: Number(row.protein_per_100g),
