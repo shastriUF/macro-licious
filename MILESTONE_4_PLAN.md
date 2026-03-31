@@ -1,9 +1,9 @@
-# Milestone 4 Plan — Barcode + Quality
+# Milestone 4 Plan — Barcode + UX Polish
 
-Last updated: 2026-02-16
+Last updated: 2026-03-31
 
 ## 1) Milestone Objective
-Add reliable barcode-assisted ingredient entry and complete quality hardening for primary user workflows.
+Add reliable barcode-assisted ingredient entry, complete quality hardening for primary user workflows, and ship deferred UX polish from Milestone 2 Phase D.
 
 ---
 
@@ -15,6 +15,11 @@ Add reliable barcode-assisted ingredient entry and complete quality hardening fo
 3. No-match fallback to manual ingredient creation
 4. Local caching for repeat barcode scans
 5. Performance and error-handling improvements across diary and recipes
+6. **Deferred Phase D UX items from Milestone 2:**
+   - Present diary as meal timeline sections with section subtotals
+   - Expand quick-add strip (recent/favorites/repeat shortcuts)
+   - Add richer empty states and undo affordance for delete/archive
+   - Add ingredient list search/sort controls for faster lookup
 
 ## Out of Scope
 - Household sharing and planner features

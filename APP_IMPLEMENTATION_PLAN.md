@@ -239,7 +239,7 @@ Status: ✅ Mostly complete (core foundation delivered; release hardening remain
 - Testing: add calculation regression tests and iOS UI tests for add/edit/delete meal log flows.
 - Release strategy: push milestone-complete TestFlight build and run end-to-end diary smoke test on device.
 
-Status: 🟡 In progress (core diary + tabbed navigation shipped; active UI iteration phase and final hardening tracked in `MILESTONE_2_PLAN.md`)
+Status: ✅ Complete (Phase D UX polish deferred to Milestone 4)
 
 ## Milestone 3 — Recipes + Wet Weight
 - Recipe creation/editing.
