@@ -8,6 +8,76 @@
 import SwiftUI
 import UIKit
 
+// MARK: - Editable meal log item for the edit sheet
+
+struct EditableMealLogItem: Identifiable {
+    let id: String
+    let ingredientId: String?
+    let ingredientName: String
+    var quantityValueInput: String
+    var quantityUnit: QuantityUnit
+    let originalQuantityValue: Double
+    let originalConsumedGrams: Double
+    let originalNutrition: MealLogNutrition
+
+    init(from item: MealLogItem) {
+        self.id = item.id
+        self.ingredientId = item.ingredientId
+        self.ingredientName = item.ingredientName
+        self.quantityValueInput = item.quantityValue.truncatingRemainder(dividingBy: 1) == 0
+            ? String(format: "%.0f", item.quantityValue)
+            : String(item.quantityValue)
+        self.quantityUnit = item.quantityUnit
+        self.originalQuantityValue = item.quantityValue
+        self.originalConsumedGrams = item.consumedGrams
+        self.originalNutrition = item.nutrition
+    }
+
+    /// Recompute nutrition using the ingredient's per-100g values.
+    /// Returns nil if the ingredient can't be found or conversion fails.
+    func nutritionPreview(ingredients: [Ingredient]) -> NutritionPreview? {
+        guard let qty = Double(quantityValueInput), qty > 0,
+              let ingredient = ingredients.first(where: { $0.id == ingredientId }) else {
+            return nil
+        }
+
+        let per100g = UnitConversion.NutritionValues(
+            calories: ingredient.caloriesPer100g,
+            carbs: ingredient.carbsPer100g,
+            protein: ingredient.proteinPer100g,
+            fat: ingredient.fatPer100g
+        )
+        guard let result = UnitConversion.computeNutrition(
+            quantity: qty,
+            unit: quantityUnit,
+            per100g: per100g,
+            densityGPerMl: ingredient.densityGPerMl,
+            servingSizeGrams: ingredient.servingSizeGrams
+        ), let grams = UnitConversion.toCanonicalGrams(
+            qty,
+            unit: quantityUnit,
+            densityGPerMl: ingredient.densityGPerMl,
+            servingSizeGrams: ingredient.servingSizeGrams
+        ) else { return nil }
+
+        return NutritionPreview(
+            consumedGrams: grams,
+            calories: result.calories,
+            carbs: result.carbs,
+            protein: result.protein,
+            fat: result.fat
+        )
+    }
+}
+
+struct NutritionPreview {
+    let consumedGrams: Double
+    let calories: Double
+    let carbs: Double
+    let protein: Double
+    let fat: Double
+}
+
 @MainActor
 struct ContentView: View {
     @StateObject private var viewModel: AuthViewModel
@@ -24,8 +94,6 @@ struct ContentView: View {
     @State private var editCarbs = ""
     @State private var editProtein = ""
     @State private var editFat = ""
-    @State private var editMealType: MealType = .breakfast
-    @State private var editMealNotes = ""
     @FocusState private var isSignInEmailFocused: Bool
 
     init(viewModel: AuthViewModel) {
@@ -146,35 +214,22 @@ struct ContentView: View {
             }
         }
         .sheet(item: $editingMealLog) { mealLog in
-            NavigationStack {
-                Form {
-                    Section("Edit Meal Log") {
-                        Picker("Meal Type", selection: $editMealType) {
-                            ForEach(MealType.allCases) { mealType in
-                                Text(mealType.label).tag(mealType)
-                            }
-                        }
-
-                        TextField("Notes (optional)", text: $editMealNotes)
-                    }
+            MealLogEditSheet(
+                mealLog: mealLog,
+                ingredients: viewModel.ingredients,
+                onSave: { mealType, notes, items in
+                    await viewModel.updateMealLog(
+                        mealLogId: mealLog.id,
+                        mealType: mealType,
+                        notes: notes,
+                        items: items
+                    )
+                    editingMealLog = nil
+                },
+                onCancel: {
+                    editingMealLog = nil
                 }
-                .scrollDismissesKeyboard(.interactively)
-                .navigationTitle(mealLog.mealType.label)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            editingMealLog = nil
-                        }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            Task {
-                                await saveEditedMealLog(mealLog)
-                            }
-                        }
-                    }
-                }
-            }
+            )
         }
     }
 
@@ -518,21 +573,7 @@ struct ContentView: View {
     }
 
     private func beginMealLogEdit(_ mealLog: MealLog) {
-        editMealType = mealLog.mealType
-        editMealNotes = mealLog.notes ?? ""
         editingMealLog = mealLog
-    }
-
-    private func saveEditedMealLog(_ mealLog: MealLog) async {
-        let normalizedNotes = editMealNotes.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        await viewModel.updateMealLog(
-            mealLogId: mealLog.id,
-            mealType: editMealType,
-            notes: normalizedNotes.isEmpty ? nil : normalizedNotes
-        )
-
-        editingMealLog = nil
     }
 
     private var mealLogEntryModeBinding: Binding<MealLogEntryMode> {
@@ -841,6 +882,137 @@ private struct MacroProgressRow: View {
             }
         }
         .accessibilityIdentifier("macro-progress-\(label.lowercased())")
+    }
+}
+
+// MARK: - Meal Log Edit Sheet
+
+/// Self-contained edit sheet that initialises its own @State from the presented MealLog,
+/// avoiding timing issues with external state set before sheet presentation.
+private struct MealLogEditSheet: View {
+    let mealLog: MealLog
+    let ingredients: [Ingredient]
+    let onSave: (MealType, String?, [CreateMealLogItemRequest]?) async -> Void
+    let onCancel: () -> Void
+
+    @State private var mealType: MealType
+    @State private var notes: String
+    @State private var items: [EditableMealLogItem]
+
+    init(
+        mealLog: MealLog,
+        ingredients: [Ingredient],
+        onSave: @escaping (MealType, String?, [CreateMealLogItemRequest]?) async -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.mealLog = mealLog
+        self.ingredients = ingredients
+        self.onSave = onSave
+        self.onCancel = onCancel
+        _mealType = State(initialValue: mealLog.mealType)
+        _notes = State(initialValue: mealLog.notes ?? "")
+        _items = State(initialValue: mealLog.items.map { EditableMealLogItem(from: $0) })
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Edit Meal Log") {
+                    Picker("Meal Type", selection: $mealType) {
+                        ForEach(MealType.allCases) { mealType in
+                            Text(mealType.label).tag(mealType)
+                        }
+                    }
+
+                    TextField("Notes (optional)", text: $notes)
+                }
+
+                Section("Items") {
+                    ForEach($items) { $item in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(item.ingredientName)
+                                .font(.headline)
+
+                            HStack {
+                                TextField("Qty", text: $item.quantityValueInput)
+                                    .keyboardType(.decimalPad)
+                                    .frame(width: 80)
+                                Picker("Unit", selection: $item.quantityUnit) {
+                                    ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
+                                        Text(unit.label).tag(unit)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                            }
+
+                            if let preview = item.nutritionPreview(ingredients: ingredients) {
+                                Text("\(preview.consumedGrams, specifier: "%.1f")g \u{2022} kcal \(Int(preview.calories)) \u{2022} C \(Int(preview.carbs)) \u{2022} P \(Int(preview.protein)) \u{2022} F \(Int(preview.fat))")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("kcal \(Int(item.originalNutrition.calories)) \u{2022} C \(Int(item.originalNutrition.carbs)) \u{2022} P \(Int(item.originalNutrition.protein)) \u{2022} F \(Int(item.originalNutrition.fat))")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle(mealLog.mealType.label)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            await save()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func save() async {
+        let normalizedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let updatedItems: [CreateMealLogItemRequest] = items.map { item in
+            if let preview = item.nutritionPreview(ingredients: ingredients) {
+                return CreateMealLogItemRequest(
+                    ingredientId: item.ingredientId,
+                    ingredientName: item.ingredientName,
+                    quantityValue: Double(item.quantityValueInput) ?? item.originalQuantityValue,
+                    quantityUnit: item.quantityUnit,
+                    consumedGrams: preview.consumedGrams,
+                    nutrition: MealLogNutrition(
+                        calories: preview.calories,
+                        carbs: preview.carbs,
+                        protein: preview.protein,
+                        fat: preview.fat
+                    )
+                )
+            } else {
+                return CreateMealLogItemRequest(
+                    ingredientId: item.ingredientId,
+                    ingredientName: item.ingredientName,
+                    quantityValue: Double(item.quantityValueInput) ?? item.originalQuantityValue,
+                    quantityUnit: item.quantityUnit,
+                    consumedGrams: item.originalConsumedGrams,
+                    nutrition: item.originalNutrition
+                )
+            }
+        }
+
+        await onSave(
+            mealType,
+            normalizedNotes.isEmpty ? nil : normalizedNotes,
+            updatedItems
+        )
     }
 }
 

@@ -393,7 +393,7 @@ final class AuthViewModel: ObservableObject {
         statusMessage = "Applied preset \(preset.displayName)."
     }
 
-    func updateMealLog(mealLogId: String, mealType: MealType, notes: String?) async {
+    func updateMealLog(mealLogId: String, mealType: MealType, notes: String?, items: [CreateMealLogItemRequest]? = nil) async {
         guard let sessionToken = sessionStore.sessionToken else {
             statusMessage = "No session token saved."
             return
@@ -404,7 +404,7 @@ final class AuthViewModel: ObservableObject {
                 date: nil,
                 mealType: mealType,
                 notes: notes,
-                items: nil
+                items: items
             )
 
             _ = try await apiClient.updateMealLog(
