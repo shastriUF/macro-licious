@@ -108,9 +108,13 @@ Status: In progress (P0–P2)
 | 7 | Macro progress visual upgrade | P1-F | ✅ Done |
 | 8 | Composer → sheet on Meals tab | P2-I | ✅ Done |
 | 9 | Better empty states | P2-J | ✅ Done |
-| 10 | Sign-in tab restructure | P3-M | Deferred |
-| 11 | Ingredient search/sort | P2-K | Deferred (M4) |
-| 12 | Meal log timeline grouping | P2-L | Deferred (M4) |
+| 10 | Disable Create/Add until form valid | Quick fix | ✅ Done |
+| 11 | Default ingredient macros to 0 | Quick fix | ✅ Done |
+| 12 | Hide Produce Quick Add toggle | Quick fix | ✅ Done |
+| 13 | Sign-in tab restructure | P3-M | Deferred |
+| 14 | Ingredient search/sort | P2-K | Deferred (M4) |
+| 15 | Meal log timeline grouping | P2-L | Deferred (M4) |
+| 16 | Revisit Produce Quick Add mode | — | Deferred |
 
 ---
 
