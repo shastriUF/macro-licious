@@ -251,13 +251,15 @@ struct ContentView: View {
     private var mealsTab: some View {
         NavigationStack {
             Form {
-                Section("Diary") {
+                Section("New Entry") {
                     DiaryComposerView(
                         viewModel: viewModel,
                         mealLogEntryModeBinding: mealLogEntryModeBinding,
                         hasMealLogDraftInput: hasMealLogDraftInput
                     )
+                }
 
+                Section("Today's Summary") {
                     DailyTotalsView(totals: viewModel.dailyTotals)
 
                     if let user = viewModel.currentUser {
@@ -270,7 +272,9 @@ struct ContentView: View {
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
+                }
 
+                Section("Meal Log") {
                     MealLogListView(
                         mealLogs: viewModel.mealLogs,
                         onEdit: { mealLog in
