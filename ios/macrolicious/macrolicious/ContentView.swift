@@ -710,7 +710,7 @@ private struct DiaryComposerView: View {
                 await viewModel.createMealLog()
             }
         } label: {
-            Label("Add Meal Log Entry", systemImage: "plus.circle.fill")
+            Label("Add Meal Log Entry", systemImage: "plus")
         }
         .buttonStyle(.borderedProminent)
         .disabled(viewModel.isLoading || !viewModel.canCreateMealLog)
