@@ -99,15 +99,15 @@ Status: In progress (P0–P2)
 
 | # | Item | Phase | Status |
 |---|------|-------|--------|
-| 1 | Fix plus icon | P0-A | Not started |
-| 2 | Split Meals tab into sections | P0-B | Not started |
-| 3 | Ingredients tab — creation form to sheet | P0-C / P1-H | Not started |
-| 4 | Consolidate status display | P0-D | Not started |
-| 5 | Card-style meal log entries | P1-E | Not started |
-| 6 | Nutrition pill formatting | P1-G | Not started |
-| 7 | Macro progress visual upgrade | P1-F | Not started |
-| 8 | Composer → sheet on Meals tab | P2-I | Not started |
-| 9 | Better empty states | P2-J | Not started |
+| 1 | Fix plus icon | P0-A | ✅ Done |
+| 2 | Split Meals tab into sections | P0-B | ✅ Done |
+| 3 | Ingredients tab — creation form to sheet | P0-C / P1-H | ✅ Done |
+| 4 | Consolidate status display | P0-D | ✅ Done |
+| 5 | Card-style meal log entries | P1-E | ✅ Done |
+| 6 | Nutrition pill formatting | P1-G | ✅ Done |
+| 7 | Macro progress visual upgrade | P1-F | ✅ Done |
+| 8 | Composer → sheet on Meals tab | P2-I | ✅ Done |
+| 9 | Better empty states | P2-J | ✅ Done |
 | 10 | Sign-in tab restructure | P3-M | Deferred |
 | 11 | Ingredient search/sort | P2-K | Deferred (M4) |
 | 12 | Meal log timeline grouping | P2-L | Deferred (M4) |
