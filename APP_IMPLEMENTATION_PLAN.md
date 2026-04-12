@@ -1,6 +1,6 @@
 # Calorie & Macro Tracker — Product + Implementation Plan
 
-_Last updated: 2026-03-31_
+_Last updated: 2026-04-12_
 
 ## 1) Product Goal
 Build a lightweight, low-friction calorie and macro tracker focused on home cooking and ingredient-level precision, without ad-heavy UX.
@@ -265,7 +265,7 @@ Status: 🟡 Not started (plan created in `MILESTONE_4_PLAN.md`)
 - Maintain continuous TestFlight cadence (early and often): release after each milestone and for major feature branches.
 - Testing: require CI green on all suites before TestFlight release and run post-deploy health checks.
 
-Status: 🟡 Not started (plan created in `MILESTONE_5_PLAN.md`)
+Status: 🟡 Not started (plan created in `MILESTONE_5_PLAN.md`; deployment and TestFlight infra already delivered — remaining work is CI gating, docs, and monitoring)
 
 ## Milestone 6 — Platform Integrations (Post-MVP)
 - Add Siri + Apple Shortcuts intents for quick capture/logging flows.
@@ -346,10 +346,11 @@ Status: ⏸️ Deferred until Milestones 1-5 are complete
 - [x] Adopt tabbed iOS IA (Sign In / Meals / Ingredients).
 - [ ] Add quick-log from ingredient and recipe.
 - [x] Show per-meal and daily totals versus macro targets.
-- [ ] Store immutable nutrition snapshot on each logged item.
+- [x] Store immutable nutrition snapshot on each logged item.
+- [x] Edit meal log items (quantity/unit) without delete-and-readd.
 
-### UI Iteration (Meals UX)
-- [ ] Add macro progress card (today vs target for calories/carbs/protein/fat).
+### UI Iteration (Meals UX) — Deferred to Milestone 4
+- [x] Add macro progress card (today vs target for calories/carbs/protein/fat).
 - [ ] Group diary into meal timeline sections with per-section subtotals.
 - [ ] Upgrade quick-add strip with recent/favorite presets and repeat shortcuts.
 - [ ] Add empty states with one-tap starter actions (add meal/use preset/copy prior meal).
@@ -377,29 +378,30 @@ Status: ⏸️ Deferred until Milestones 1-5 are complete
 - [ ] Add conflict handling for duplicate ingredients/recipes on import.
 
 ### Quality Gates
-- [ ] Unit tests for conversion and macro calculations.
+- [x] Unit tests for conversion and macro calculations.
 - [ ] Integration tests for ingredient, recipe, and cook session APIs.
-- [ ] UI tests for primary logging flows.
+- [x] UI tests for primary logging flows.
 - [ ] End-to-end smoke test script for real-device milestone validation.
 
 ### Release & Operations
 - [x] Produce first internal TestFlight build in Milestone 1.
-- [ ] Release updated TestFlight build after each milestone and major feature branch.
+- [x] Deploy backend to Render Free tier (`macrolicious-api.onrender.com`).
+- [x] Release updated TestFlight build after each milestone and major feature branch.
 - [ ] Require CI green before every TestFlight submission.
 - [ ] Run post-deploy health checks for backend and DB after each release.
 
 ---
 
-## 17) Current Progress Snapshot (2026-02-16)
+## 17) Current Progress Snapshot (2026-04-12)
 
 ### Delivered
-- Backend: auth/profile + ingredient CRUD APIs, tests, lint/typecheck, CI, Supabase staged persistence, smoke test.
-- iOS: auth/profile + ingredient CRUD screens, session handling, callback URL wiring for deep-link flow, shared Xcode scheme for CLI/CI.
-- Infra/docs: Supabase setup guide, migration workflow, RLS enablement migration, secret-handling guidance.
+- Backend: auth/profile + ingredient CRUD + meal log CRUD APIs, unit conversion engine, tests (40 passing), lint/typecheck, Supabase persistence, Render Free deployment.
+- iOS: auth/profile + ingredient CRUD + meal log CRUD + macro target progress + meal log item editing, tabbed navigation, UI tests, TestFlight builds.
+- Infra: Supabase Postgres with 6 versioned migrations, Render backend deployment, TestFlight distribution pipeline.
+- Docs: AGENTS.md workspace instructions, Supabase setup guide, milestone plans.
 
 ### Next Critical Path
-1. Milestone 2 logging domain + diary UI/API.
-2. Milestone 3 recipe/cook-session/wet-weight math.
-3. Milestone 4 barcode integration + fallback + quality pass.
-4. Milestone 5 deploy/operate hardening and release cadence.
-5. Milestone 6 post-MVP platform integrations (Shortcuts/Siri + Apple Health).
+1. Milestone 3 recipe/cook-session/wet-weight math.
+2. Milestone 4 barcode integration + UX polish.
+3. Milestone 5 CI gating, operational docs, monitoring.
+4. Milestone 6 post-MVP platform integrations (Shortcuts/Siri + Apple Health).
