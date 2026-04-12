@@ -81,7 +81,7 @@ Current status snapshot:
 Milestone exit criteria:
 - ✅ backend tests + lint + typecheck green
 - ✅ iOS tests green
-- ⏳ real-device smoke run of diary workflow (deferred to Milestone 3 TestFlight pass)
+- ✅ real-device smoke run of diary workflow (sign-in, ingredient load, meal log create verified on device via Render)
 
 ---
 
@@ -106,7 +106,7 @@ Status: ✅ Completed for core logging; target-progress UI remains.
 2. Run TestFlight smoke pass
 3. Fix regressions and finalize milestone
 
-Status: 🟡 In progress (backend + iOS tests green; more diary UI tests + TestFlight smoke pending)
+Status: ✅ Completed
 
 ## Phase D — UI Iteration (Deferred to Milestone 4)
 Items moved to Milestone 4 to keep Milestone 2 focused on core logging delivery.
@@ -120,4 +120,4 @@ Status: ⏸️ Deferred
 - [x] Daily totals match backend-calculated values
 - [x] Macro target progress is visible and correct
 - [x] Tests cover critical logging and calculation paths
-- [ ] Milestone TestFlight build validated on device (deferred to Milestone 3 TestFlight pass)
+- [x] Milestone TestFlight build validated on device (sign-in, ingredient load, meal log create verified)
