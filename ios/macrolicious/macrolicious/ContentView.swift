@@ -872,52 +872,63 @@ private struct MacroTargetProgressView: View {
     let targets: MacroTargets
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Target Progress")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            MacroProgressRow(label: "Calories", consumed: totals.calories, target: targets.calories, tint: .orange)
-            MacroProgressRow(label: "Carbs", consumed: totals.carbs, target: targets.carbs, tint: .blue)
-            MacroProgressRow(label: "Protein", consumed: totals.protein, target: targets.protein, tint: .green)
+            HStack(spacing: 16) {
+                MacroGaugeView(label: "kcal", consumed: totals.calories, target: targets.calories, tint: .orange)
+                MacroGaugeView(label: "Carbs", consumed: totals.carbs, target: targets.carbs, tint: .blue, unit: "g")
+                MacroGaugeView(label: "Protein", consumed: totals.protein, target: targets.protein, tint: .green, unit: "g")
+            }
+            .frame(maxWidth: .infinity)
         }
         .padding(.vertical, 4)
         .accessibilityIdentifier("macro-target-progress-section")
     }
 }
 
-private struct MacroProgressRow: View {
+private struct MacroGaugeView: View {
     let label: String
     let consumed: Double
     let target: Double
     let tint: Color
+    var unit: String = ""
 
     private var ratio: Double {
-        guard target > 0 else {
-            return 0
-        }
-
+        guard target > 0 else { return 0 }
         return consumed / target
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(label)
-                    .font(.footnote)
-                Spacer()
-                Text("\(Int(consumed)) / \(Int(target))")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+    private var remaining: Double {
+        max(target - consumed, 0)
+    }
 
-            ProgressView(value: min(ratio, 1.0))
-                .tint(tint)
+    var body: some View {
+        VStack(spacing: 4) {
+            Gauge(value: min(ratio, 1.0)) {
+                EmptyView()
+            } currentValueLabel: {
+                Text("\(Int(consumed))")
+                    .font(.system(.title3, design: .rounded, weight: .semibold))
+            }
+            .gaugeStyle(.accessoryCircular)
+            .tint(ratio > 1 ? .red : tint)
+            .scaleEffect(1.2)
+
+            Text(label)
+                .font(.caption2)
+                .fontWeight(.medium)
 
             if ratio > 1 {
-                Text("Over by \(Int(consumed - target))")
+                Text("+\(Int(consumed - target))\(unit)")
                     .font(.caption2)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(.red)
+            } else if target > 0 {
+                Text("\(Int(remaining))\(unit) left")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
         .accessibilityIdentifier("macro-progress-\(label.lowercased())")
