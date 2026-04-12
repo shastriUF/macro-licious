@@ -86,6 +86,7 @@ struct ContentView: View {
     @State private var editingMealLog: MealLog?
     @State private var deleteMealLogCandidate: MealLog?
     @State private var showingCreateIngredient = false
+    @State private var showingMealComposer = false
     @State private var editName = ""
     @State private var editBrand = ""
     @State private var editDensity = ""
@@ -252,12 +253,43 @@ struct ContentView: View {
     private var mealsTab: some View {
         NavigationStack {
             Form {
-                Section("New Entry") {
-                    DiaryComposerView(
-                        viewModel: viewModel,
-                        mealLogEntryModeBinding: mealLogEntryModeBinding,
-                        hasMealLogDraftInput: hasMealLogDraftInput
-                    )
+                Section {
+                    DatePicker("Date", selection: $viewModel.diaryDate, displayedComponents: .date)
+
+                    Button("Refresh Diary") {
+                        Task {
+                            await viewModel.refreshMealLogs()
+                        }
+                    }
+                    .disabled(viewModel.currentUser == nil || viewModel.isLoading)
+                }
+
+                if !viewModel.mealQuickPresets.isEmpty {
+                    Section("Quick Add") {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(viewModel.mealQuickPresets) { preset in
+                                    Button {
+                                        viewModel.applyMealQuickPreset(preset)
+                                        showingMealComposer = true
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(preset.mealType.label)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                            Text(preset.displayName)
+                                                .font(.footnote)
+                                                .lineLimit(1)
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 8)
+                                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Section("Today's Summary") {
@@ -296,6 +328,21 @@ struct ContentView: View {
                         ProgressView()
                     }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingMealComposer = true
+                    } label: {
+                        Label("New Entry", systemImage: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingMealComposer) {
+                MealComposerSheet(
+                    viewModel: viewModel,
+                    mealLogEntryModeBinding: mealLogEntryModeBinding,
+                    hasMealLogDraftInput: hasMealLogDraftInput,
+                    onDismiss: { showingMealComposer = false }
+                )
             }
             .onChange(of: viewModel.diaryDate) { _, _ in
                 guard viewModel.currentUser != nil else {
@@ -626,89 +673,68 @@ private enum MealLogEntryMode: String, CaseIterable, Identifiable {
     }
 }
 
-private struct DiaryComposerView: View {
+private struct MealComposerSheet: View {
     @ObservedObject var viewModel: AuthViewModel
     let mealLogEntryModeBinding: Binding<MealLogEntryMode>
     let hasMealLogDraftInput: Bool
+    let onDismiss: () -> Void
 
     var body: some View {
-        DatePicker("Date", selection: $viewModel.diaryDate, displayedComponents: .date)
-
-        Button("Refresh Diary") {
-            Task {
-                await viewModel.refreshMealLogs()
-            }
-        }
-        .disabled(viewModel.currentUser == nil || viewModel.isLoading)
-
-        if !viewModel.mealQuickPresets.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Quick Add")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(viewModel.mealQuickPresets) { preset in
-                            Button {
-                                viewModel.applyMealQuickPreset(preset)
-                            } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(preset.mealType.label)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                    Text(preset.displayName)
-                                        .font(.footnote)
-                                        .lineLimit(1)
-                                }
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 8)
-                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                            }
-                            .buttonStyle(.plain)
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("Meal Type", selection: $viewModel.selectedMealType) {
+                        ForEach(MealType.allCases) { mealType in
+                            Text(mealType.label).tag(mealType)
                         }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Picker("Entry Mode", selection: mealLogEntryModeBinding) {
+                        ForEach(MealLogEntryMode.allCases) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section {
+                    TextField("Notes (optional)", text: $viewModel.mealNotesInput)
+
+                    if viewModel.useIngredientForMealLog {
+                        ingredientEntryView
+                    } else {
+                        manualEntryView
+                    }
+                }
+
+                if hasMealLogDraftInput, let validationMessage = viewModel.mealLogValidationMessage {
+                    Section {
+                        Text(validationMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
                     }
                 }
             }
-        }
-
-        Picker("Meal Type", selection: $viewModel.selectedMealType) {
-            ForEach(MealType.allCases) { mealType in
-                Text(mealType.label).tag(mealType)
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle("New Entry")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        Task {
+                            await viewModel.createMealLog()
+                            onDismiss()
+                        }
+                    }
+                    .disabled(viewModel.isLoading || !viewModel.canCreateMealLog)
+                }
             }
         }
-        .pickerStyle(.segmented)
-
-        Picker("Entry Mode", selection: mealLogEntryModeBinding) {
-            ForEach(MealLogEntryMode.allCases) { mode in
-                Text(mode.label).tag(mode)
-            }
-        }
-        .pickerStyle(.segmented)
-
-        TextField("Notes (optional)", text: $viewModel.mealNotesInput)
-
-        if viewModel.useIngredientForMealLog {
-            ingredientEntryView
-        } else {
-            manualEntryView
-        }
-
-        if hasMealLogDraftInput, let validationMessage = viewModel.mealLogValidationMessage {
-            Text(validationMessage)
-                .font(.footnote)
-                .foregroundStyle(.orange)
-        }
-
-        Button {
-            Task {
-                await viewModel.createMealLog()
-            }
-        } label: {
-            Label("Add Meal Log Entry", systemImage: "plus")
-        }
-        .buttonStyle(.borderedProminent)
-        .disabled(viewModel.isLoading || !viewModel.canCreateMealLog)
     }
 
     @ViewBuilder
