@@ -286,12 +286,17 @@ struct ContentView: View {
                         }
                     )
                 }
-
-                statusSection
             }
             .scrollDismissesKeyboard(.interactively)
             .background(KeyboardDismissOnTapInstaller())
             .navigationTitle("Meals")
+            .toolbar {
+                ToolbarItem(placement: .status) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                    }
+                }
+            }
             .onChange(of: viewModel.diaryDate) { _, _ in
                 guard viewModel.currentUser != nil else {
                     return
@@ -308,12 +313,16 @@ struct ContentView: View {
         NavigationStack {
             Form {
                 ingredientListSection
-                statusSection
             }
             .scrollDismissesKeyboard(.interactively)
             .background(KeyboardDismissOnTapInstaller())
             .navigationTitle("Ingredients")
             .toolbar {
+                ToolbarItem(placement: .status) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                    }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingCreateIngredient = true
