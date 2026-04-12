@@ -492,8 +492,11 @@ struct ContentView: View {
             }
 
             if viewModel.ingredients.isEmpty {
-                Text("No ingredients yet")
-                    .foregroundStyle(.secondary)
+                ContentUnavailableView {
+                    Label("No Ingredients", systemImage: "carrot")
+                } description: {
+                    Text("Tap + to add your first ingredient.")
+                }
             } else {
                 ForEach(viewModel.ingredients) { ingredient in
                     VStack(alignment: .leading, spacing: 6) {
@@ -740,9 +743,11 @@ private struct MealComposerSheet: View {
     @ViewBuilder
     private var ingredientEntryView: some View {
         if viewModel.ingredients.isEmpty {
-            Text("No ingredients yet. Create one in Ingredients or switch to Manual Snapshot.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            ContentUnavailableView {
+                Label("No Ingredients", systemImage: "carrot")
+            } description: {
+                Text("Add ingredients in the Ingredients tab, or switch to Manual Snapshot.")
+            }
 
             Button("Switch to Manual Snapshot") {
                 viewModel.useIngredientForMealLog = false
@@ -1174,8 +1179,11 @@ private struct MealLogListView: View {
 
     var body: some View {
         if mealLogs.isEmpty {
-            Text("No meal logs for selected date")
-                .foregroundStyle(.secondary)
+            ContentUnavailableView {
+                Label("No Meals Logged", systemImage: "fork.knife")
+            } description: {
+                Text("Tap + to log your first meal for this day.")
+            }
         } else {
             ForEach(mealLogs) { mealLog in
                 VStack(alignment: .leading, spacing: 8) {
