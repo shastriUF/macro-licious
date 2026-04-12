@@ -85,6 +85,7 @@ struct ContentView: View {
     @State private var archiveCandidate: Ingredient?
     @State private var editingMealLog: MealLog?
     @State private var deleteMealLogCandidate: MealLog?
+    @State private var showingCreateIngredient = false
     @State private var editName = ""
     @State private var editBrand = ""
     @State private var editDensity = ""
@@ -306,12 +307,27 @@ struct ContentView: View {
     private var ingredientsTab: some View {
         NavigationStack {
             Form {
-                ingredientsSection
+                ingredientListSection
                 statusSection
             }
             .scrollDismissesKeyboard(.interactively)
             .background(KeyboardDismissOnTapInstaller())
             .navigationTitle("Ingredients")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingCreateIngredient = true
+                    } label: {
+                        Label("Add Ingredient", systemImage: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingCreateIngredient) {
+                IngredientCreateSheet(
+                    viewModel: viewModel,
+                    onDismiss: { showingCreateIngredient = false }
+                )
+            }
         }
     }
 
@@ -411,48 +427,11 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private var ingredientsSection: some View {
+    private var ingredientListSection: some View {
         Section("Ingredients") {
             Button("Refresh Ingredients") {
                 Task {
                     await viewModel.refreshIngredients()
-                }
-            }
-
-            Toggle("Produce Quick Add", isOn: $viewModel.isProduceModeEnabled)
-
-            if viewModel.isProduceModeEnabled {
-                Text("Produce mode is weight-first: name + macros per 100g, brand optional.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            TextField("Name", text: $viewModel.ingredientNameInput)
-            if !viewModel.isProduceModeEnabled {
-                TextField("Brand (optional)", text: $viewModel.ingredientBrandInput)
-            }
-            TextField("Density g/ml (optional)", text: $viewModel.ingredientDensityInput)
-                .keyboardType(.decimalPad)
-            TextField("Serving size grams (optional)", text: $viewModel.ingredientServingSizeInput)
-                .keyboardType(.decimalPad)
-            Picker("Default unit", selection: $viewModel.ingredientDefaultUnitInput) {
-                Text("None").tag(QuantityUnit?.none)
-                ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
-                    Text(unit.label).tag(QuantityUnit?.some(unit))
-                }
-            }
-            TextField("Calories / 100g", text: $viewModel.ingredientCaloriesInput)
-                .keyboardType(.decimalPad)
-            TextField("Carbs / 100g", text: $viewModel.ingredientCarbsInput)
-                .keyboardType(.decimalPad)
-            TextField("Protein / 100g", text: $viewModel.ingredientProteinInput)
-                .keyboardType(.decimalPad)
-            TextField("Fat / 100g", text: $viewModel.ingredientFatInput)
-                .keyboardType(.decimalPad)
-
-            Button("Create Ingredient") {
-                Task {
-                    await viewModel.createIngredient()
                 }
             }
 
@@ -1017,6 +996,74 @@ private struct MealLogEditSheet: View {
             normalizedNotes.isEmpty ? nil : normalizedNotes,
             updatedItems
         )
+    }
+}
+
+// MARK: - Ingredient Create Sheet
+
+private struct IngredientCreateSheet: View {
+    @ObservedObject var viewModel: AuthViewModel
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Toggle("Produce Quick Add", isOn: $viewModel.isProduceModeEnabled)
+
+                    if viewModel.isProduceModeEnabled {
+                        Text("Produce mode is weight-first: name + macros per 100g, brand optional.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section("Details") {
+                    TextField("Name", text: $viewModel.ingredientNameInput)
+                    if !viewModel.isProduceModeEnabled {
+                        TextField("Brand (optional)", text: $viewModel.ingredientBrandInput)
+                    }
+                    TextField("Density g/ml (optional)", text: $viewModel.ingredientDensityInput)
+                        .keyboardType(.decimalPad)
+                    TextField("Serving size grams (optional)", text: $viewModel.ingredientServingSizeInput)
+                        .keyboardType(.decimalPad)
+                    Picker("Default unit", selection: $viewModel.ingredientDefaultUnitInput) {
+                        Text("None").tag(QuantityUnit?.none)
+                        ForEach(QuantityUnit.allCases, id: \.rawValue) { unit in
+                            Text(unit.label).tag(QuantityUnit?.some(unit))
+                        }
+                    }
+                }
+
+                Section("Nutrition per 100g") {
+                    TextField("Calories", text: $viewModel.ingredientCaloriesInput)
+                        .keyboardType(.decimalPad)
+                    TextField("Carbs", text: $viewModel.ingredientCarbsInput)
+                        .keyboardType(.decimalPad)
+                    TextField("Protein", text: $viewModel.ingredientProteinInput)
+                        .keyboardType(.decimalPad)
+                    TextField("Fat", text: $viewModel.ingredientFatInput)
+                        .keyboardType(.decimalPad)
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle("New Ingredient")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        Task {
+                            await viewModel.createIngredient()
+                            onDismiss()
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
