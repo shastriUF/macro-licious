@@ -1113,21 +1113,9 @@ private struct IngredientCreateSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Toggle("Produce Quick Add", isOn: $viewModel.isProduceModeEnabled)
-
-                    if viewModel.isProduceModeEnabled {
-                        Text("Produce mode is weight-first: name + macros per 100g, brand optional.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
                 Section("Details") {
                     TextField("Name", text: $viewModel.ingredientNameInput)
-                    if !viewModel.isProduceModeEnabled {
-                        TextField("Brand (optional)", text: $viewModel.ingredientBrandInput)
-                    }
+                    TextField("Brand (optional)", text: $viewModel.ingredientBrandInput)
                     TextField("Density g/ml (optional)", text: $viewModel.ingredientDensityInput)
                         .keyboardType(.decimalPad)
                     TextField("Serving size grams (optional)", text: $viewModel.ingredientServingSizeInput)
@@ -1166,6 +1154,7 @@ private struct IngredientCreateSheet: View {
                             onDismiss()
                         }
                     }
+                    .disabled(viewModel.isLoading || !viewModel.canCreateIngredient)
                 }
             }
         }

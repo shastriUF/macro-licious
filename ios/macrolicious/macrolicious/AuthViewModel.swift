@@ -79,7 +79,7 @@ final class AuthViewModel: ObservableObject {
     @Published var mealCarbsInput = ""
     @Published var mealProteinInput = ""
     @Published var mealFatInput = ""
-    @Published var isProduceModeEnabled = true
+    @Published var isProduceModeEnabled = false
     @Published var isLoading = false
     @Published private(set) var signInMode: SignInMode = .unknown
 
@@ -178,6 +178,24 @@ final class AuthViewModel: ObservableObject {
         mealLogValidationMessage == nil
     }
 
+    var canCreateIngredient: Bool {
+        let name = ingredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return false }
+
+        let calories = Double(ingredientCaloriesInput) ?? (ingredientCaloriesInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+        let carbs = Double(ingredientCarbsInput) ?? (ingredientCarbsInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+        let protein = Double(ingredientProteinInput) ?? (ingredientProteinInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+        let fat = Double(ingredientFatInput) ?? (ingredientFatInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+
+        guard let c = calories, let cb = carbs, let p = protein, let f = fat,
+              c >= 0, cb >= 0, p >= 0, f >= 0 else { return false }
+
+        if let d = Double(ingredientDensityInput), d <= 0 { return false }
+        if let s = Double(ingredientServingSizeInput), s <= 0 { return false }
+
+        return sessionStore.sessionToken != nil
+    }
+
     init(apiClient: APIClientProtocol = APIClient(), sessionStore: SessionStoreProtocol = SessionStore()) {
         self.apiClient = apiClient
         self.sessionStore = sessionStore
@@ -261,18 +279,20 @@ final class AuthViewModel: ObservableObject {
             return
         }
 
-        guard
-            !ingredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            let calories = Double(ingredientCaloriesInput),
-            let carbs = Double(ingredientCarbsInput),
-            let protein = Double(ingredientProteinInput),
-            let fat = Double(ingredientFatInput),
-            calories >= 0,
-            carbs >= 0,
-            protein >= 0,
-            fat >= 0
+        guard !ingredientNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            statusMessage = "Enter an ingredient name."
+            return
+        }
+
+        let calories = Double(ingredientCaloriesInput) ?? (ingredientCaloriesInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+        let carbs = Double(ingredientCarbsInput) ?? (ingredientCarbsInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+        let protein = Double(ingredientProteinInput) ?? (ingredientProteinInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+        let fat = Double(ingredientFatInput) ?? (ingredientFatInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : nil)
+
+        guard let calories, let carbs, let protein, let fat,
+              calories >= 0, carbs >= 0, protein >= 0, fat >= 0
         else {
-            statusMessage = "Enter ingredient name and valid macro numbers."
+            statusMessage = "Macro values must be valid non-negative numbers."
             return
         }
 
