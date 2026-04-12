@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct MacroTargets: Codable, Equatable {
     let calories: Double
@@ -107,6 +108,15 @@ enum MealType: String, Codable, CaseIterable, Identifiable {
         case .lunch: return "Lunch"
         case .dinner: return "Dinner"
         case .snack: return "Snack"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .breakfast: return .orange
+        case .lunch: return .blue
+        case .dinner: return .purple
+        case .snack: return .green
         }
     }
 }

@@ -1087,13 +1087,20 @@ private struct MealLogListView: View {
                 .foregroundStyle(.secondary)
         } else {
             ForEach(mealLogs) { mealLog in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
                         Text(mealLog.mealType.label)
-                            .font(.headline)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(mealLog.mealType.color, in: Capsule())
+
                         Spacer()
+
                         Text(mealLog.date)
-                            .font(.footnote)
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
 
@@ -1104,16 +1111,24 @@ private struct MealLogListView: View {
                     }
 
                     ForEach(mealLog.items) { item in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.ingredientName)
-                            Text(
-                                "\(item.quantityValue, specifier: "%.2f") \(item.quantityUnit.label) • \(item.consumedGrams, specifier: "%.1f")g • kcal \(Int(item.nutrition.calories))"
-                            )
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                        HStack(alignment: .top) {
+                            Rectangle()
+                                .fill(mealLog.mealType.color.opacity(0.4))
+                                .frame(width: 3)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.ingredientName)
+                                    .font(.subheadline)
+                                Text(
+                                    "\(item.quantityValue, specifier: "%.1f") \(item.quantityUnit.label) · \(Int(item.nutrition.calories)) kcal"
+                                )
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }
+                .padding(.vertical, 6)
                 .contentShape(Rectangle())
                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                     Button("Edit") {
@@ -1126,7 +1141,6 @@ private struct MealLogListView: View {
                         onDelete(mealLog)
                     }
                 }
-                .padding(.vertical, 4)
             }
         }
     }
