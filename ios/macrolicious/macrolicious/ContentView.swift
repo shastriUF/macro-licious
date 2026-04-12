@@ -453,9 +453,12 @@ struct ContentView: View {
                         Text(ingredient.name)
                             .font(.headline)
 
-                        Text("P \(Int(ingredient.proteinPer100g)) • C \(Int(ingredient.carbsPer100g)) • F \(Int(ingredient.fatPer100g)) • kcal \(Int(ingredient.caloriesPer100g))")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                        NutritionPillsView(
+                            calories: ingredient.caloriesPer100g,
+                            carbs: ingredient.carbsPer100g,
+                            protein: ingredient.proteinPer100g,
+                            fat: ingredient.fatPer100g
+                        )
 
                         if let density = ingredient.densityGPerMl {
                             Text("Density: \(density, specifier: "%.2f") g/ml")
@@ -732,11 +735,13 @@ private struct DiaryComposerView: View {
             }
 
             if let ingredient = viewModel.selectedMealIngredient {
-                Text(
-                    "Per 100g: kcal \(Int(ingredient.caloriesPer100g)) • C \(Int(ingredient.carbsPer100g)) • P \(Int(ingredient.proteinPer100g)) • F \(Int(ingredient.fatPer100g))"
+                NutritionPillsView(
+                    calories: ingredient.caloriesPer100g,
+                    carbs: ingredient.carbsPer100g,
+                    protein: ingredient.proteinPer100g,
+                    fat: ingredient.fatPer100g,
+                    prefix: "Per 100g"
                 )
-                .font(.footnote)
-                .foregroundStyle(.secondary)
 
                 if let density = ingredient.densityGPerMl {
                     Text("Density: \(density, specifier: "%.2f") g/ml")
@@ -764,13 +769,15 @@ private struct DiaryComposerView: View {
 
             if let preview = viewModel.mealLogPreview {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Computed Nutrition")
+                    Text("\(preview.consumedGrams, specifier: "%.1f")g")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(
-                        "\(preview.consumedGrams, specifier: "%.1f")g • kcal \(Int(preview.nutrition.calories)) • C \(Int(preview.nutrition.carbs)) • P \(Int(preview.nutrition.protein)) • F \(Int(preview.nutrition.fat))"
+                    NutritionPillsView(
+                        calories: preview.nutrition.calories,
+                        carbs: preview.nutrition.carbs,
+                        protein: preview.nutrition.protein,
+                        fat: preview.nutrition.fat
                     )
-                    .font(.footnote)
                 }
             } else if !viewModel.mealQuantityValueInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text("Unable to compute nutrition. Use a mass unit or ensure the ingredient has density for volume units.")
@@ -808,15 +815,55 @@ private struct DiaryComposerView: View {
     }
 }
 
+// MARK: - Nutrition Pills
+
+private struct NutritionPillsView: View {
+    let calories: Double
+    let carbs: Double
+    let protein: Double
+    let fat: Double
+    var prefix: String? = nil
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let prefix {
+                Text(prefix)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            pill("\(Int(calories)) kcal", color: .orange)
+            pill("C \(Int(carbs))g", color: .blue)
+            pill("P \(Int(protein))g", color: .green)
+            pill("F \(Int(fat))g", color: .yellow)
+        }
+    }
+
+    private func pill(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.caption2)
+            .fontWeight(.medium)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.15), in: Capsule())
+            .foregroundStyle(color)
+    }
+}
+
 private struct DailyTotalsView: View {
     let totals: MealLogNutrition
 
     var body: some View {
-        Text(
-            "Totals: kcal \(Int(totals.calories)) • C \(Int(totals.carbs)) • P \(Int(totals.protein)) • F \(Int(totals.fat))"
-        )
-        .font(.footnote)
-        .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Daily Totals")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            NutritionPillsView(
+                calories: totals.calories,
+                carbs: totals.carbs,
+                protein: totals.protein,
+                fat: totals.fat
+            )
+        }
     }
 }
 
@@ -938,13 +985,20 @@ private struct MealLogEditSheet: View {
                             }
 
                             if let preview = item.nutritionPreview(ingredients: ingredients) {
-                                Text("\(preview.consumedGrams, specifier: "%.1f")g \u{2022} kcal \(Int(preview.calories)) \u{2022} C \(Int(preview.carbs)) \u{2022} P \(Int(preview.protein)) \u{2022} F \(Int(preview.fat))")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                                NutritionPillsView(
+                                    calories: preview.calories,
+                                    carbs: preview.carbs,
+                                    protein: preview.protein,
+                                    fat: preview.fat,
+                                    prefix: String(format: "%.1fg", preview.consumedGrams)
+                                )
                             } else {
-                                Text("kcal \(Int(item.originalNutrition.calories)) \u{2022} C \(Int(item.originalNutrition.carbs)) \u{2022} P \(Int(item.originalNutrition.protein)) \u{2022} F \(Int(item.originalNutrition.fat))")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                                NutritionPillsView(
+                                    calories: item.originalNutrition.calories,
+                                    carbs: item.originalNutrition.carbs,
+                                    protein: item.originalNutrition.protein,
+                                    fat: item.originalNutrition.fat
+                                )
                             }
                         }
                         .padding(.vertical, 4)
