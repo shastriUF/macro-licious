@@ -59,4 +59,4 @@ build/
 *.db
 
 # Supabase local metadata
-supabase/.temp/
+supabase/**/.temp/
